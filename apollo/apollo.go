@@ -25,10 +25,11 @@ type Apollo struct {
 	handlers  sync.Map
 }
 
-func NewApollo(serverUrl string, appId string, namespace string) (*Apollo, error) {
+func NewApollo(serverUrl string, appId string, namespace string) *Apollo {
 	ago, err := agollo.New(serverUrl, appId, agollo.DefaultNamespace(namespace), agollo.AutoFetchOnCacheMiss())
 	if err != nil {
-		return nil, err
+		logo.JsonE("err", err)
+		return nil
 	}
 
 	var my = &Apollo{
@@ -42,7 +43,7 @@ func NewApollo(serverUrl string, appId string, namespace string) (*Apollo, error
 	var errorChan, watchChan = ago.Start(), ago.Watch()
 	go my.goLoop(errorChan, watchChan)
 
-	return my, nil
+	return my
 }
 
 func (my *Apollo) FillViper(vip *viper.Viper) error {
