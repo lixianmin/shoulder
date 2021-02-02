@@ -1,4 +1,4 @@
-module github.com/lixianmin/fig
+module github.com/lixianmin/shoulder
 
 go 1.13
 
