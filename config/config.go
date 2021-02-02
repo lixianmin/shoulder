@@ -1,4 +1,4 @@
-package fig
+package config
 
 import (
 	"fmt"
