@@ -1,4 +1,4 @@
-package config
+package configx
 
 import (
 	"fmt"
@@ -60,7 +60,7 @@ func createViper(configPath string, args arguments) *viper.Viper {
 
 	var err = vip.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("can not load local config file, err=%q", err))
+		panic(fmt.Errorf("can not load local configx file, err=%q", err))
 	}
 
 	return vip

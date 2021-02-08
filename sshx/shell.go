@@ -1,8 +1,7 @@
-package ssh
+package sshx
 
 import (
 	"context"
-	"fmt"
 	"github.com/yahoo/vssh"
 	"strings"
 	"time"
@@ -49,34 +48,10 @@ func (my *Shell) fetchResponseChan(ctx context.Context, cmd string, label string
 	}
 }
 
-func (my *Shell) Run(cmd string, label string, timeout time.Duration) error {
+func (my *Shell) Run(cmd string, label string, timeout time.Duration) (chan *vssh.Response, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var responseChan, err = my.fetchResponseChan(ctx, cmd, label, timeout)
-	if err != nil {
-		return err
-	}
-
-	var counter = 0
-	var text = ""
-
-	for response := range responseChan {
-		counter++
-		if err := response.Err(); err != nil {
-			return err
-		}
-
-		fmt.Printf("----------------- (%02d) %s ----------------- \n", counter, response.ID())
-		var stream = response.GetStream()
-		for stream.ScanStdout() {
-			text = stream.TextStdout()
-			println(text)
-		}
-
-		// 输出一个换行
-		println()
-	}
-
-	return nil
+	return responseChan, err
 }
