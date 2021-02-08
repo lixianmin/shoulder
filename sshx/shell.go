@@ -36,6 +36,14 @@ func (my *Shell) Wait() {
 	_, _ = my.ssh.Wait()
 }
 
+func (my *Shell) Run(cmd string, label string, timeout time.Duration) (chan *vssh.Response, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var responseChan, err = my.fetchResponseChan(ctx, cmd, label, timeout)
+	return responseChan, err
+}
+
 func (my *Shell) fetchResponseChan(ctx context.Context, cmd string, label string, timeout time.Duration) (chan *vssh.Response, error) {
 	label = strings.TrimSpace(label)
 	if len(label) > 0 {
@@ -46,12 +54,4 @@ func (my *Shell) fetchResponseChan(ctx context.Context, cmd string, label string
 		var responseChan = my.ssh.Run(ctx, cmd, timeout)
 		return responseChan, nil
 	}
-}
-
-func (my *Shell) Run(cmd string, label string, timeout time.Duration) (chan *vssh.Response, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	var responseChan, err = my.fetchResponseChan(ctx, cmd, label, timeout)
-	return responseChan, err
 }
