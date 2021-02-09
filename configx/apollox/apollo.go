@@ -57,7 +57,7 @@ func (my *Apollo) FillViper(vip *viper.Viper) error {
 
 	// 这个AddRemoteProvider()虽然可以设置多个，但只有一个起作用，可能是为了兼容 etcd 这种远程服务器
 	// 所以，application这个namespace不用了，直接使用crab.dsn，由每个appId对应的项目以覆盖的形式创建所有的配置
-	var err = vip.AddRemoteProvider("apollox", my.serverUrl, my.namespace)
+	var err = vip.AddRemoteProvider("apollo", my.serverUrl, my.namespace)
 	if err != nil {
 		return err
 	}

@@ -32,8 +32,8 @@ func (my *Shell) AddClient(address string, user string, password string, opt ...
 	return err
 }
 
-func (my *Shell) Wait() {
-	_, _ = my.ssh.Wait()
+func (my *Shell) GetSsh() *vssh.VSSH {
+	return my.ssh
 }
 
 func (my *Shell) Run(cmd string, label string, timeout time.Duration) (chan *vssh.Response, error) {
