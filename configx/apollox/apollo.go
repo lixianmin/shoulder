@@ -116,3 +116,7 @@ func (my *Apollo) goLoop(errorChan <-chan *agollo.LongPollerError, watchChan <-c
 		}
 	}
 }
+
+func (my *Apollo) GetAgollo() agollo.Agollo {
+	return my.ago
+}
