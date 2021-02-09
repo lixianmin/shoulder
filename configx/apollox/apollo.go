@@ -120,3 +120,7 @@ func (my *Apollo) goLoop(errorChan <-chan *agollo.LongPollerError, watchChan <-c
 func (my *Apollo) GetAgollo() agollo.Agollo {
 	return my.ago
 }
+
+func (my *Apollo) Get(key string) string{
+	return my.ago.Get(key, agollo.WithNamespace(my.namespace))
+}
