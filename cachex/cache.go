@@ -20,24 +20,24 @@ type Cache struct {
 
 // numCounters：用于统计访问频率信息的计数器，通常比缓存max capacity要大，比如10倍
 // maxCost：缓存占用的内存大小，单位: 字节
-func NewCache(numCounters int64, maxCost int64, opts ...Option) (*Cache, error) {
+func NewCache(numCounters int64, maxCost int64, opts ...Option) *Cache {
 	var config = createConfig(opts)
 	config.NumCounters = numCounters
 	config.MaxCost = maxCost
 	var cache, err = ristretto.NewCache(config)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	var my = &Cache{
 		cache: cache,
 	}
 
-	return my, nil
+	return my
 }
 
-func (my *Cache) Load(key interface{}, loader func(key interface{}) (interface{}, time.Duration)) interface{} {
+func (my *Cache) Load(key interface{}, loader func() (interface{}, time.Duration)) interface{} {
 	var cache = my.cache
 	var value, ok = cache.Get(key)
 	if !ok {
@@ -47,7 +47,7 @@ func (my *Cache) Load(key interface{}, loader func(key interface{}) (interface{}
 		value, ok = cache.Get(key)
 		if !ok {
 			var ttl time.Duration
-			value, ttl = loader(key)
+			value, ttl = loader()
 			cache.SetWithTTL(key, value, 0, ttl)
 		}
 	}
