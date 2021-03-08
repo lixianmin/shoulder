@@ -33,6 +33,7 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *kafka.R
 		GroupID:  args.groupId,
 		MinBytes: args.minBytes,
 		MaxBytes: args.maxBytes,
+		Logger:   &Logger{},
 	})
 
 	return reader

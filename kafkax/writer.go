@@ -35,6 +35,7 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		BatchSize:    args.batchSize,
 		BatchTimeout: args.batchTimeout,
 		BatchBytes:   args.batchBytes,
+		Logger:       &Logger{},
 	}
 
 	return writer

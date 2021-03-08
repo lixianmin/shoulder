@@ -4,8 +4,8 @@ go 1.13
 
 require (
 	github.com/dgraph-io/ristretto v0.0.3
-	github.com/lixianmin/got v0.0.0-20210210075731-d6886b677c9b
-	github.com/lixianmin/logo v0.0.0-20210210075827-83f33470a25e
+	github.com/lixianmin/got v0.0.0-20210308063133-d4389aad91f7
+	github.com/lixianmin/logo v0.0.0-20210308072537-d1890d021bb8
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414 // indirect
 	github.com/segmentio/kafka-go v0.4.10
