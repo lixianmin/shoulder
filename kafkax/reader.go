@@ -13,7 +13,7 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-func CreateReader(brokers []string, topic string, options ...ReaderOption) *kafka.Reader {
+func NewReader(brokers []string, topic string, options ...ReaderOption) *kafka.Reader {
 	// 我们还是很希望一眼能够看到默认值的
 	var serviceName = filepath.Base(os.Args[0])
 	var args = readerArguments{

@@ -12,7 +12,7 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-func CreateWriter(brokers []string, topic string, options ...WriterOption) *kafka.Writer {
+func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.Writer {
 	// 我们还是很希望一眼能够看到默认值的
 	var args = writerArguments{
 		balancer:     &kafka.LeastBytes{},
