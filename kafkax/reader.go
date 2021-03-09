@@ -3,6 +3,7 @@ package kafkax
 import (
 	"context"
 	"github.com/lixianmin/got/loom"
+	"github.com/lixianmin/logo"
 	"github.com/segmentio/kafka-go"
 	"os"
 	"path/filepath"
@@ -33,6 +34,7 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		groupId:         serviceName,
 		minBytes:        10e3, // 10KB
 		maxBytes:        10e6, // 10MB
+		startOffset:     kafka.FirstOffset,
 		messageChanSize: 128,
 	}
 
@@ -42,12 +44,14 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 
 	// 创建对象
 	var reader = kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		Topic:    topic,
-		GroupID:  args.groupId,
-		MinBytes: args.minBytes,
-		MaxBytes: args.maxBytes,
-		Logger:   &Logger{},
+		Brokers:     brokers,
+		Topic:       topic,
+		GroupID:     args.groupId,
+		MinBytes:    args.minBytes,
+		MaxBytes:    args.maxBytes,
+		StartOffset: args.startOffset,
+		Logger:      &logger{PrintFunc: logo.GetLogger().Info},
+		ErrorLogger: &logger{PrintFunc: logo.GetLogger().Error},
 	})
 
 	var my = &Reader{

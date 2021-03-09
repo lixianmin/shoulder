@@ -11,6 +11,7 @@ type readerArguments struct {
 	groupId         string
 	minBytes        int
 	maxBytes        int
+	startOffset     int64
 	messageChanSize int
 }
 
@@ -31,6 +32,12 @@ func WithMinBytes(minBytes int) ReaderOption {
 func WithMaxBytes(maxBytes int) ReaderOption {
 	return func(args *readerArguments) {
 		args.maxBytes = maxBytes
+	}
+}
+
+func WithStartOffset(startOffset int64) ReaderOption {
+	return func(args *readerArguments) {
+		args.startOffset = startOffset
 	}
 }
 

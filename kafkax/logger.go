@@ -1,7 +1,5 @@
 package kafkax
 
-import "github.com/lixianmin/logo"
-
 /********************************************************************
 created:    2021-03-08
 author:     lixianmin
@@ -9,9 +7,10 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-type Logger struct {
+type logger struct {
+	PrintFunc func(first interface{}, args ...interface{})
 }
 
-func (my *Logger) Printf(format string, args ...interface{}) {
-	logo.GetLogger().Info(format, args...)
+func (my *logger) Printf(format string, args ...interface{}) {
+	my.PrintFunc(format, args...)
 }

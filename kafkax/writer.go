@@ -1,6 +1,7 @@
 package kafkax
 
 import (
+	"github.com/lixianmin/logo"
 	"github.com/segmentio/kafka-go"
 	"time"
 )
@@ -35,7 +36,8 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		BatchSize:    args.batchSize,
 		BatchTimeout: args.batchTimeout,
 		BatchBytes:   args.batchBytes,
-		Logger:       &Logger{},
+		Logger:       &logger{PrintFunc: logo.GetLogger().Info},
+		ErrorLogger:  &logger{PrintFunc: logo.GetLogger().Error},
 	}
 
 	return writer
