@@ -2,6 +2,7 @@ package kafkax
 
 import (
 	"context"
+	"github.com/lixianmin/got/loom"
 	"github.com/segmentio/kafka-go"
 	"os"
 	"path/filepath"
@@ -14,18 +15,25 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
+type Message struct {
+	kafka.Message
+	Err error
+}
+
 type Reader struct {
 	reader      *kafka.Reader
-	uncommitted []kafka.Message
+	messageChan chan Message
+	wc          loom.WaitClose
 }
 
 func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader {
 	// 我们还是很希望一眼能够看到默认值的
 	var serviceName = filepath.Base(os.Args[0])
 	var args = readerArguments{
-		groupId:  serviceName,
-		minBytes: 10e3, // 10KB
-		maxBytes: 10e6, // 10MB
+		groupId:         serviceName,
+		minBytes:        10e3, // 10KB
+		maxBytes:        10e6, // 10MB
+		messageChanSize: 128,
 	}
 
 	for _, opt := range options {
@@ -44,44 +52,36 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 
 	var my = &Reader{
 		reader:      reader,
-		uncommitted: make([]kafka.Message, 0, 16),
+		messageChan: make(chan Message, args.messageChanSize),
 	}
 
+	loom.Go(my.goRead)
 	return my
 }
 
-func (my *Reader) FetchMessage(ctx context.Context) (kafka.Message, error) {
-	var msg, err = my.reader.FetchMessage(ctx)
-	if err != nil {
-		return msg, err
+func (my *Reader) goRead(later loom.Later) {
+	defer my.Close()
+
+	var ctx = context.Background()
+	for !my.wc.IsClosed() {
+		var msg, err = my.reader.FetchMessage(ctx)
+		my.messageChan <- Message{
+			Message: msg,
+			Err:     err,
+		}
 	}
-
-	my.uncommitted = append(my.uncommitted, msg)
-	return msg, nil
-}
-
-func (my *Reader) CommitMessages(ctx context.Context) error {
-	var count = len(my.uncommitted)
-	if count == 0 {
-		return nil
-	}
-
-	if err := my.reader.CommitMessages(ctx, my.uncommitted...); err != nil {
-		return err
-	}
-
-	my.uncommitted = my.uncommitted[:0]
-	return nil
 }
 
 func (my *Reader) Close() error {
-	return my.reader.Close()
-}
-
-func (my *Reader) GetUncommittedCount() int {
-	return len(my.uncommitted)
+	return my.wc.Close(func() error {
+		return my.reader.Close()
+	})
 }
 
 func (my *Reader) GetReader() *kafka.Reader {
 	return my.reader
+}
+
+func (my *Reader) GetMessageChan() <-chan Message {
+	return my.messageChan
 }

@@ -8,9 +8,10 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 type readerArguments struct {
-	groupId  string
-	minBytes int
-	maxBytes int
+	groupId         string
+	minBytes        int
+	maxBytes        int
+	messageChanSize int
 }
 
 type ReaderOption func(*readerArguments)
@@ -30,5 +31,13 @@ func WithMinBytes(minBytes int) ReaderOption {
 func WithMaxBytes(maxBytes int) ReaderOption {
 	return func(args *readerArguments) {
 		args.maxBytes = maxBytes
+	}
+}
+
+func WithMessageChanSize(size int) ReaderOption {
+	return func(args *readerArguments) {
+		if size > 0 {
+			args.messageChanSize = size
+		}
 	}
 }
