@@ -74,6 +74,10 @@ func (my *Reader) CommitMessages(ctx context.Context) error {
 	return nil
 }
 
+func (my *Reader) Close() error {
+	return my.reader.Close()
+}
+
 func (my *Reader) GetUncommittedCount() int {
 	return len(my.uncommitted)
 }
