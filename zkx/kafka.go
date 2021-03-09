@@ -1,4 +1,4 @@
-package kafkax
+package zkx
 
 import (
 	"github.com/wvanbergen/kazoo-go"
@@ -11,9 +11,9 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-func RequestBrokerList(zookeeperConnectionAddress string) ([]string, error) {
+func RequestKafkaBrokers(zkAddress string) ([]string, error) {
 	var config = kazoo.NewConfig()
-	var zk, err = kazoo.NewKazooFromConnectionString(zookeeperConnectionAddress, config)
+	var zk, err = kazoo.NewKazooFromConnectionString(zkAddress, config)
 	if err != nil {
 		return nil, err
 	}
