@@ -8,6 +8,6 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 const (
-	MonitorStateNormal = iota
-	MonitorStateLagging
+	monitorStateNormal = iota
+	monitorStateLagging
 )

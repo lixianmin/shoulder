@@ -19,6 +19,18 @@ type readerMonitor struct {
 	lagLimit     time.Duration
 	eventCounter int
 	checkEvery   int // 每多少次检查一下
+
+	lagTime      time.Time
+	nextWarnTime time.Time
+}
+
+func newReaderMonitory(lagLimit time.Duration) *readerMonitor {
+	var my = &readerMonitor{
+		state:    monitorStateNormal,
+		lagLimit: lagLimit,
+	}
+
+	return my
 }
 
 func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
@@ -27,25 +39,35 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 	}
 
 	const eventLimit = 5
-	var lag = time.Now().Sub(msg.Time)
+	const warnInterval = time.Minute
 
-	if my.state == MonitorStateNormal {
+	var now = time.Now()
+	var lag = now.Sub(msg.Time)
+
+	if my.state == monitorStateNormal {
 		if lag > my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", MonitorStateNormal, "nextState", MonitorStateLagging, "lag", lag.String())
-				my.state = MonitorStateLagging
+				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String())
+				my.state = monitorStateLagging
 				my.eventCounter = 0
+
+				my.lagTime = now
+				my.nextWarnTime = now.Add(warnInterval)
 			}
 		}
-	} else if my.state == MonitorStateLagging {
+	} else if my.state == monitorStateLagging {
 		if lag < my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", MonitorStateLagging, "nextState", MonitorStateNormal, "lag", lag.String())
-				my.state = MonitorStateNormal
+				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String())
+				my.state = monitorStateNormal
 				my.eventCounter = 0
 			}
+		} else if now.After(my.nextWarnTime) {
+			// 每间隔1分钟，报警一次
+			logo.JsonW("state", "normal", "laggingTime", now.Sub(my.lagTime).String())
+			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
 	}
 }

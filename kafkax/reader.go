@@ -60,10 +60,7 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 	var my = &Reader{
 		reader:      reader,
 		messageChan: make(chan Message, args.messageChanSize),
-		monitor: &readerMonitor{
-			state:    MonitorStateNormal,
-			lagLimit: args.monitorLagLimit,
-		},
+		monitor:     newReaderMonitory(args.monitorLagLimit),
 	}
 
 	loom.Go(my.goRead)
