@@ -1,5 +1,7 @@
 package kafkax
 
+import "time"
+
 /********************************************************************
 created:    2021-03-01
 author:     lixianmin
@@ -13,6 +15,7 @@ type readerArguments struct {
 	maxBytes        int
 	startOffset     int64
 	messageChanSize int
+	monitorLag      time.Duration
 }
 
 type ReaderOption func(*readerArguments)
@@ -45,6 +48,14 @@ func WithMessageChanSize(size int) ReaderOption {
 	return func(args *readerArguments) {
 		if size > 0 {
 			args.messageChanSize = size
+		}
+	}
+}
+
+func WithMonitorLag(lag time.Duration) ReaderOption {
+	return func(args *readerArguments) {
+		if lag > 0 {
+			args.monitorLag = lag
 		}
 	}
 }
