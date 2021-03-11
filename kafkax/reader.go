@@ -26,10 +26,7 @@ type Reader struct {
 	reader      *kafka.Reader
 	messageChan chan Message
 	wc          loom.WaitClose
-
-	monitorState   int
-	monitorLag     time.Duration
-	monitorCounter int
+	monitor     *readerMonitor
 }
 
 func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader {
@@ -41,7 +38,7 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		maxBytes:        10e6, // 10MB
 		startOffset:     kafka.FirstOffset,
 		messageChanSize: 128,
-		monitorLag:      time.Minute,
+		monitorLagLimit: time.Minute,
 	}
 
 	for _, opt := range options {
@@ -61,10 +58,12 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 	})
 
 	var my = &Reader{
-		reader:       reader,
-		messageChan:  make(chan Message, args.messageChanSize),
-		monitorState: MonitorStateNormal,
-		monitorLag:   args.monitorLag,
+		reader:      reader,
+		messageChan: make(chan Message, args.messageChanSize),
+		monitor: &readerMonitor{
+			state:    MonitorStateNormal,
+			lagLimit: args.monitorLagLimit,
+		},
 	}
 
 	loom.Go(my.goRead)
@@ -75,7 +74,6 @@ func (my *Reader) goRead(later loom.Later) {
 	defer my.Close()
 
 	var ctx = context.Background()
-	var checkEvery = 0
 	for !my.wc.IsClosed() {
 		var msg, err = my.reader.FetchMessage(ctx)
 
@@ -84,37 +82,8 @@ func (my *Reader) goRead(later loom.Later) {
 			Err:     err,
 		}
 
-		checkEvery++
-		if err == nil && checkEvery > 10 {
-			checkEvery = 0
-			my.monitorConsumeLag(msg)
-		}
-	}
-}
-
-// 监控消费延迟
-func (my *Reader) monitorConsumeLag(msg kafka.Message) {
-	const changeStateCount = 5
-	var delta = time.Now().Sub(msg.Time)
-	var monitorLag = my.monitorLag
-
-	if my.monitorState == MonitorStateNormal {
-		if delta > monitorLag {
-			my.monitorCounter++
-			if my.monitorCounter > changeStateCount {
-				logo.JsonW("lastMonitorState", MonitorStateNormal, "nextMonitorState", MonitorStateLagging, "monitorLag", monitorLag)
-				my.monitorState = MonitorStateLagging
-				my.monitorCounter = 0
-			}
-		}
-	} else if my.monitorState == MonitorStateLagging {
-		if delta < monitorLag {
-			my.monitorCounter++
-			if my.monitorCounter > changeStateCount {
-				logo.JsonW("lastMonitorState", MonitorStateLagging, "nextMonitorState", MonitorStateNormal, "monitorLag", monitorLag)
-				my.monitorState = MonitorStateNormal
-				my.monitorCounter = 0
-			}
+		if err == nil {
+			my.monitor.checkConsumeLag(msg)
 		}
 	}
 }

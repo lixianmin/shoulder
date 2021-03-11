@@ -15,7 +15,7 @@ type readerArguments struct {
 	maxBytes        int
 	startOffset     int64
 	messageChanSize int
-	monitorLag      time.Duration
+	monitorLagLimit time.Duration
 }
 
 type ReaderOption func(*readerArguments)
@@ -52,10 +52,10 @@ func WithMessageChanSize(size int) ReaderOption {
 	}
 }
 
-func WithMonitorLag(lag time.Duration) ReaderOption {
+func WithMonitorLagLimit(lag time.Duration) ReaderOption {
 	return func(args *readerArguments) {
 		if lag > 0 {
-			args.monitorLag = lag
+			args.monitorLagLimit = lag
 		}
 	}
 }
