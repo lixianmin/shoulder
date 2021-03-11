@@ -75,6 +75,7 @@ func (my *Reader) goRead(later loom.Later) {
 	defer my.Close()
 
 	var ctx = context.Background()
+	var checkEvery = 0
 	for !my.wc.IsClosed() {
 		var msg, err = my.reader.FetchMessage(ctx)
 
@@ -83,7 +84,9 @@ func (my *Reader) goRead(later loom.Later) {
 			Err:     err,
 		}
 
-		if err == nil {
+		checkEvery++
+		if err == nil && checkEvery > 10 {
+			checkEvery = 0
 			my.monitorConsumeLag(msg)
 		}
 	}
