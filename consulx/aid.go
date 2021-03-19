@@ -8,13 +8,11 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 import (
-	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
-	"github.com/lixianmin/got/loom"
+	"github.com/lixianmin/shoulder/cachex"
 	"math/rand"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -24,8 +22,7 @@ type Aid struct {
 	DeregisterCriticalServiceAfter time.Duration
 	CheckInterval                  time.Duration
 
-	services     sync.Map
-	servicesLock sync.Mutex
+	cache *cachex.Cache
 }
 
 func NewAid(consulAddress string) *Aid {
@@ -34,6 +31,7 @@ func NewAid(consulAddress string) *Aid {
 		Tag:                            []string{},
 		DeregisterCriticalServiceAfter: time.Duration(1) * time.Minute,
 		CheckInterval:                  time.Duration(10) * time.Second,
+		cache:                          cachex.NewCache(10000, 1024*1024),
 	}
 
 	return aid
@@ -75,74 +73,51 @@ func (aid *Aid) RegisterService(name string, port int) error {
 }
 
 func (aid *Aid) GetService(name string) (*api.AgentService, error) {
-	backObject, ok := aid.services.Load(name)
-	if ok {
-		return getServiceFromBackObject(backObject)
-	}
 
-	aid.servicesLock.Lock()
-	defer aid.servicesLock.Unlock()
-
-	backObject, ok = aid.services.Load(name)
-	if !ok {
+	var item = aid.cache.Load(name, func() (interface{}, time.Duration) {
 		var config = api.DefaultConfig()
 		config.Address = aid.address
 
 		var client, err = api.NewClient(config)
 		if err != nil {
-			return nil, err
+			return err, time.Second
 		}
 
 		var health = client.Health()
-		backObject = loom.NewBackObject(10*time.Second, func() (i interface{}, e error) {
-			var entries, _, err = health.Service(name, "", true, nil)
-			if err != nil {
-				return nil, err
-			}
+		entries, _, err := health.Service(name, "", true, nil)
+		if err != nil {
+			return err, time.Second
+		}
 
-			var services = make([]*api.AgentService, len(entries))[:0]
-			for i := range entries {
-				var entry = entries[i]
-				services = append(services, entry.Service)
-			}
+		var services = make([]*api.AgentService, len(entries))[:0]
+		for i := range entries {
+			var entry = entries[i]
+			services = append(services, entry.Service)
+		}
 
-			return services, nil
-		})
+		return services, 5 * time.Second
+	})
 
-		aid.services.Store(name, backObject)
+	switch item := item.(type) {
+	case error:
+		return nil, item
+	case []*api.AgentService:
+		if len(item) > 0 {
+			var service = getRandomService(item)
+			return service, nil
+		}
 	}
 
-	return getServiceFromBackObject(backObject)
+	return nil, fmt.Errorf("found no service with name=%s", name)
 }
 
-func getServiceFromBackObject(backObject interface{}) (*api.AgentService, error) {
-	var servicesInterface = backObject.(*loom.BackObject).Get()
-	if servicesInterface == nil {
-		return nil, errors.New("empty backObject")
-	}
-
-	var services = servicesInterface.([]*api.AgentService)
+func getRandomService(services []*api.AgentService) *api.AgentService {
 	var count = len(services)
 	if count > 0 {
 		var index = rand.Intn(count)
 		var service = services[index]
-		return service, nil
+		return service
 	}
 
-	return nil, errors.New("len(services) == 0")
+	return nil
 }
-
-//func (aid *Aid) newAgent() (*api.Agent, error) {
-//	var config = api.DefaultConfig()
-//	config.Address = aid.address
-//
-//	client, err := api.NewClient(config)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var agent = client.Agent()
-//	return agent, nil
-//}
-
-
