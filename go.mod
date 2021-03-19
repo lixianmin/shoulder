@@ -7,13 +7,12 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/frankban/quicktest v1.11.1 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
-	github.com/hashicorp/consul/api v1.7.0
+	github.com/hashicorp/consul/api v1.8.0
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/hashicorp/serf v0.9.4 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lixianmin/got v0.0.0-20210308063133-d4389aad91f7
 	github.com/lixianmin/logo v0.0.0-20210308072537-d1890d021bb8
