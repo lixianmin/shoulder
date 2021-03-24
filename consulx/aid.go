@@ -51,11 +51,11 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 
 	var hostIp = GetLocalIp()
 	//var hostIPArgument = strings.Replace(hostIp, ".", "-", -1)
-	//var nodeID = fmt.Sprintf("%v-%v-%v", name, hostIPArgument, port)
-	var nodeID = fmt.Sprintf("%v-%v:%v", name, hostIp, port)
+	//var nodeId = fmt.Sprintf("%v-%v-%v", name, hostIPArgument, port)
+	var nodeId = fmt.Sprintf("%v-%v:%v", name, hostIp, port)
 	var httpHealthUrl = fmt.Sprintf("http://%v:%v/health", hostIp, port)
 	var reg = &api.AgentServiceRegistration{
-		ID:      nodeID,    // 服务节点的名称
+		ID:      nodeId,    // 服务节点的名称
 		Name:    name,      // 服务名称
 		Tags:    args.tags, // tag，可以为空
 		Port:    port,      // 服务端口
