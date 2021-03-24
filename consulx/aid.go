@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/consul/api"
 	"github.com/lixianmin/shoulder/cachex"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -50,16 +49,17 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 
 	var agent = aid.client.Agent()
 
-	var hostIP = GetLocalIp()
-	var hostIPArgument = strings.Replace(hostIP, ".", "-", -1)
-	var nodeID = fmt.Sprintf("%v-%v-%v", name, hostIPArgument, port)
-	var httpHealthUrl = fmt.Sprintf("http://%v:%v/health", hostIP, port)
+	var hostIp = GetLocalIp()
+	//var hostIPArgument = strings.Replace(hostIp, ".", "-", -1)
+	//var nodeID = fmt.Sprintf("%v-%v-%v", name, hostIPArgument, port)
+	var nodeID = fmt.Sprintf("%v-%v:%v", name, hostIp, port)
+	var httpHealthUrl = fmt.Sprintf("http://%v:%v/health", hostIp, port)
 	var reg = &api.AgentServiceRegistration{
 		ID:      nodeID,    // 服务节点的名称
 		Name:    name,      // 服务名称
 		Tags:    args.tags, // tag，可以为空
 		Port:    port,      // 服务端口
-		Address: hostIP,    // 服务 hostIP
+		Address: hostIp,    // 服务 hostIp
 		Check: &api.AgentServiceCheck{ // 健康检查
 			Interval:                       args.checkInterval.String(), // 健康检查间隔
 			HTTP:                           httpHealthUrl,
