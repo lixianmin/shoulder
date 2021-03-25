@@ -2,7 +2,6 @@ package kafkax
 
 import (
 	"context"
-	"fmt"
 	"github.com/lixianmin/got/loom"
 	"github.com/lixianmin/logo"
 	"github.com/segmentio/kafka-go"
@@ -38,9 +37,9 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 	var serviceName = filepath.Base(os.Args[0])
 	var args = readerArguments{
 		groupId:         serviceName,
-		minBytes:        10e3, // 10KB
-		maxBytes:        10e6, // 10MB
-		startOffset:     kafka.FirstOffset,
+		minBytes:        10e3,              // 10KB
+		maxBytes:        10e6,              // 10MB
+		startOffset:     kafka.FirstOffset, // 设置startOffset这事，只有在第一次进程的时候起作用，后续offset值会存储到zk中，如果想重新刷一遍数据的话，需要换一个group
 		messageChanSize: 128,
 		monitorLagLimit: time.Minute,
 	}
@@ -98,27 +97,6 @@ func (my *Reader) Close() error {
 		var reader = my.Reader()
 		return reader.Close()
 	})
-}
-
-func (my *Reader) SetOffset(offset int64) error {
-	if offset < kafka.FirstOffset {
-		return fmt.Errorf("invalid offset=%d", offset)
-	}
-
-	var usingGroup = my.config.GroupID != ""
-	if usingGroup {
-		my.config.StartOffset = offset
-
-		var reader = my.Reader()
-		var err = reader.Close()
-
-		var next = kafka.NewReader(my.config)
-		my.setReader(next)
-		return err
-	} else {
-		var reader = my.Reader()
-		return reader.SetOffset(offset)
-	}
 }
 
 func (my *Reader) Offset() int64 {
