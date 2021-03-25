@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"time"
+	"unsafe"
 )
 
 /********************************************************************
@@ -25,7 +26,7 @@ type Message struct {
 }
 
 type Reader struct {
-	reader      atomic.Value //*kafka.Reader
+	reader      unsafe.Pointer //*kafka.Reader
 	config      kafka.ReaderConfig
 	messageChan chan Message
 	wc          loom.WaitClose
@@ -78,7 +79,7 @@ func (my *Reader) goRead(later loom.Later) {
 
 	var ctx = context.Background()
 	for !my.wc.IsClosed() {
-		var reader = my.GetReader()
+		var reader = my.Reader()
 		var msg, err = reader.FetchMessage(ctx)
 
 		my.messageChan <- Message{
@@ -94,7 +95,7 @@ func (my *Reader) goRead(later loom.Later) {
 
 func (my *Reader) Close() error {
 	return my.wc.Close(func() error {
-		var reader = my.GetReader()
+		var reader = my.Reader()
 		return reader.Close()
 	})
 }
@@ -108,26 +109,31 @@ func (my *Reader) SetOffset(offset int64) error {
 	if usingGroup {
 		my.config.StartOffset = offset
 
-		var reader = my.GetReader()
+		var reader = my.Reader()
 		var err = reader.Close()
 
 		var next = kafka.NewReader(my.config)
 		my.setReader(next)
 		return err
 	} else {
-		var reader = my.GetReader()
+		var reader = my.Reader()
 		return reader.SetOffset(offset)
 	}
 }
 
+func (my *Reader) Offset() int64 {
+	return my.Reader().Offset()
+}
+
 func (my *Reader) setReader(reader *kafka.Reader) {
-	my.reader.Store(reader)
+	atomic.StorePointer((*unsafe.Pointer)(my.reader), unsafe.Pointer(reader))
 }
 
-func (my *Reader) GetReader() *kafka.Reader {
-	return my.reader.Load().(*kafka.Reader)
+func (my *Reader) Reader() *kafka.Reader {
+	var p = (*kafka.Reader)(atomic.LoadPointer((*unsafe.Pointer)(my.reader)))
+	return p
 }
 
-func (my *Reader) GetMessageChan() <-chan Message {
+func (my *Reader) MessageChan() <-chan Message {
 	return my.messageChan
 }
