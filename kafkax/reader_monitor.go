@@ -1,6 +1,7 @@
 package kafkax
 
 import (
+	"github.com/lixianmin/got/timex"
 	"github.com/lixianmin/logo"
 	"github.com/segmentio/kafka-go"
 	"time"
@@ -48,7 +49,7 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 		if lag > my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String())
+				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
 				my.state = monitorStateLagging
 				my.eventCounter = 0
 
@@ -60,7 +61,7 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 		if lag < my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String())
+				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
 				my.state = monitorStateNormal
 				my.eventCounter = 0
 			}
