@@ -126,11 +126,11 @@ func (my *Reader) Offset() int64 {
 }
 
 func (my *Reader) setReader(reader *kafka.Reader) {
-	atomic.StorePointer((*unsafe.Pointer)(my.reader), unsafe.Pointer(reader))
+	atomic.StorePointer((*unsafe.Pointer)(&my.reader), unsafe.Pointer(reader))
 }
 
 func (my *Reader) Reader() *kafka.Reader {
-	var p = (*kafka.Reader)(atomic.LoadPointer((*unsafe.Pointer)(my.reader)))
+	var p = (*kafka.Reader)(atomic.LoadPointer((*unsafe.Pointer)(&my.reader)))
 	return p
 }
 
