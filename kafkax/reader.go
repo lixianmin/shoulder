@@ -2,11 +2,13 @@ package kafkax
 
 import (
 	"context"
+	"fmt"
 	"github.com/lixianmin/got/loom"
 	"github.com/lixianmin/logo"
 	"github.com/segmentio/kafka-go"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,7 +25,8 @@ type Message struct {
 }
 
 type Reader struct {
-	reader      *kafka.Reader
+	reader      atomic.Value //*kafka.Reader
+	config      kafka.ReaderConfig
 	messageChan chan Message
 	wc          loom.WaitClose
 	monitor     *readerMonitor
@@ -45,8 +48,8 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		opt(&args)
 	}
 
-	// 创建对象
-	var reader = kafka.NewReader(kafka.ReaderConfig{
+	// 创建config
+	var config = kafka.ReaderConfig{
 		Brokers:     brokers,
 		Topic:       topic,
 		GroupID:     args.groupId,
@@ -55,14 +58,17 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		StartOffset: args.startOffset,
 		Logger:      &logger{PrintFunc: logo.GetLogger().Info},
 		ErrorLogger: &logger{PrintFunc: logo.GetLogger().Error},
-	})
+	}
 
+	// 创建对象
 	var my = &Reader{
-		reader:      reader,
+		config:      config,
 		messageChan: make(chan Message, args.messageChanSize),
 		monitor:     newReaderMonitory(args.monitorLagLimit),
 	}
 
+	var reader = kafka.NewReader(config)
+	my.setReader(reader)
 	loom.Go(my.goRead)
 	return my
 }
@@ -72,7 +78,8 @@ func (my *Reader) goRead(later loom.Later) {
 
 	var ctx = context.Background()
 	for !my.wc.IsClosed() {
-		var msg, err = my.reader.FetchMessage(ctx)
+		var reader = my.GetReader()
+		var msg, err = reader.FetchMessage(ctx)
 
 		my.messageChan <- Message{
 			Message: msg,
@@ -87,12 +94,38 @@ func (my *Reader) goRead(later loom.Later) {
 
 func (my *Reader) Close() error {
 	return my.wc.Close(func() error {
-		return my.reader.Close()
+		var reader = my.GetReader()
+		return reader.Close()
 	})
 }
 
+func (my *Reader) SetOffset(offset int64) error {
+	if offset < kafka.FirstOffset {
+		return fmt.Errorf("invalid offset=%d", offset)
+	}
+
+	var usingGroup = my.config.GroupID != ""
+	if usingGroup {
+		my.config.StartOffset = offset
+
+		var reader = my.GetReader()
+		var err = reader.Close()
+
+		var next = kafka.NewReader(my.config)
+		my.setReader(next)
+		return err
+	} else {
+		var reader = my.GetReader()
+		return reader.SetOffset(offset)
+	}
+}
+
+func (my *Reader) setReader(reader *kafka.Reader) {
+	my.reader.Store(reader)
+}
+
 func (my *Reader) GetReader() *kafka.Reader {
-	return my.reader
+	return my.reader.Load().(*kafka.Reader)
 }
 
 func (my *Reader) GetMessageChan() <-chan Message {
