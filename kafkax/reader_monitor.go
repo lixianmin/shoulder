@@ -67,7 +67,7 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 			}
 		} else if now.After(my.nextWarnTime) {
 			// 每间隔1分钟，报警一次
-			logo.JsonW("state", "normal", "laggingTime", now.Sub(my.lagTime).String())
+			logo.JsonW("state", "normal", "lastingTime", now.Sub(my.lagTime).String(), "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
 			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
 	}
