@@ -49,7 +49,7 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 		if lag > my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
+				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
 				my.state = monitorStateLagging
 				my.eventCounter = 0
 
@@ -61,13 +61,13 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 		if lag < my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
+				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
 				my.state = monitorStateNormal
 				my.eventCounter = 0
 			}
 		} else if now.After(my.nextWarnTime) {
 			// 每间隔1分钟，报警一次
-			logo.JsonW("state", "normal", "lastingTime", now.Sub(my.lagTime).String(), "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", msg.Time.Format(timex.Layout))
+			logo.JsonW("state", "normal", "lastingTime", now.Sub(my.lagTime).String(), "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
 			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
 	}
@@ -81,4 +81,9 @@ func (my *readerMonitor) needCheck() bool {
 	}
 
 	return false
+}
+
+// kafka给设置的时间是UTC的，需要改成Local的，这样好接受一些
+func formatMessageTime(t time.Time) string {
+	return t.In(time.Local).Format(timex.Layout)
 }
