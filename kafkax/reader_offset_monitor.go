@@ -13,18 +13,29 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-// 监控消息流失
+// 监控消息丢失
 type readerOffsetMonitor struct {
-	lastOffset int64
+	lastOffsets map[int]int64
+}
+
+func newReaderOffsetMonitor() *readerOffsetMonitor {
+	var my = &readerOffsetMonitor{
+		lastOffsets: make(map[int]int64, 4),
+	}
+
+	return my
 }
 
 func (my *readerOffsetMonitor) checkOffset(msg kafka.Message) {
-	if my.lastOffset > 0 {
-		var lostMessageCount = msg.Offset - my.lastOffset - 1
+	var partition = msg.Partition
+	var lastOffset = my.lastOffsets[partition]
+
+	if lastOffset > 0 {
+		var lostMessageCount = msg.Offset - lastOffset - 1
 		if lostMessageCount > 0 {
-			logo.JsonW("lostMessageCount", lostMessageCount, "lastOffset", my.lastOffset, "offset", msg.Offset, "topic", msg.Topic, "partition", msg.Partition, "time", timex.FormatTime(msg.Time))
+			logo.JsonW("lostMessageCount", lostMessageCount, "lastOffset", lastOffset, "offset", msg.Offset, "topic", msg.Topic, "partition", partition, "time", timex.FormatTime(msg.Time))
 		}
 	}
 
-	my.lastOffset = msg.Offset
+	my.lastOffsets[partition] = msg.Offset
 }
