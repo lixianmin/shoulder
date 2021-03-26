@@ -20,7 +20,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/segmentio/kafka-go v0.4.10
+	github.com/segmentio/kafka-go v0.4.12
 	github.com/shima-park/agollo v1.2.10
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
