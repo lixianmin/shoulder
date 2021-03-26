@@ -14,8 +14,8 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/lixianmin/got v0.0.0-20210308063133-d4389aad91f7
-	github.com/lixianmin/logo v0.0.0-20210308072537-d1890d021bb8
+	github.com/lixianmin/got v0.0.0-20210326025914-b087151f3832
+	github.com/lixianmin/logo v0.0.0-20210326030107-ae8a75a89598
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect

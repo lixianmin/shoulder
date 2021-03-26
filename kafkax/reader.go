@@ -7,9 +7,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"os"
 	"path/filepath"
-	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
 /********************************************************************
@@ -25,7 +23,7 @@ type Message struct {
 }
 
 type Reader struct {
-	reader      unsafe.Pointer //*kafka.Reader
+	reader      *kafka.Reader
 	config      kafka.ReaderConfig
 	messageChan chan Message
 	wc          loom.WaitClose
@@ -99,19 +97,15 @@ func (my *Reader) Close() error {
 	})
 }
 
-func (my *Reader) Offset() int64 {
-	return my.Reader().Offset()
-}
-
 func (my *Reader) setReader(reader *kafka.Reader) {
-	//atomic.StorePointer((*unsafe.Pointer)(&my.reader), unsafe.Pointer(reader))
-	atomic.StorePointer(&my.reader, unsafe.Pointer(reader))
+	//atomic.StorePointer(&my.reader, unsafe.Pointer(reader))
+	my.reader = reader
 }
 
 func (my *Reader) Reader() *kafka.Reader {
-	//var p = (*kafka.Reader)(atomic.LoadPointer((*unsafe.Pointer)(&my.reader)))
-	var p = (*kafka.Reader)(atomic.LoadPointer(&my.reader))
-	return p
+	//var p = (*kafka.Reader)(atomic.LoadPointer(&my.reader))
+	//return p
+	return my.reader
 }
 
 func (my *Reader) MessageChan() <-chan Message {

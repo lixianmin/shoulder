@@ -21,7 +21,7 @@ type readerMonitor struct {
 	eventCounter int
 	checkEvery   int // 每多少次检查一下
 
-	lagTime      time.Time
+	startLagTime time.Time
 	nextWarnTime time.Time
 }
 
@@ -43,31 +43,31 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 	const warnInterval = time.Minute
 
 	var now = time.Now()
-	var lag = now.Sub(msg.Time)
+	var lagged = now.Sub(msg.Time)
 
 	if my.state == monitorStateNormal {
-		if lag > my.lagLimit {
+		if lagged > my.lagLimit {
 			my.eventCounter++
 			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "normal", "nextState", "lagging", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
+				logo.JsonW("lagged", timex.FormatDuration(lagged), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time))
 				my.state = monitorStateLagging
 				my.eventCounter = 0
 
-				my.lagTime = now
+				my.startLagTime = now
 				my.nextWarnTime = now.Add(warnInterval)
 			}
 		}
 	} else if my.state == monitorStateLagging {
-		if lag < my.lagLimit {
+		if lagged < my.lagLimit {
 			my.eventCounter++
-			if my.eventCounter > eventLimit {
-				logo.JsonW("lastState", "lagging", "nextState", "normal", "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
+			if my.eventCounter > eventLimit { // 恢复正常
+				logo.JsonW("normal", timex.FormatDuration(lagged), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time))
 				my.state = monitorStateNormal
 				my.eventCounter = 0
 			}
-		} else if now.After(my.nextWarnTime) {
-			// 每间隔1分钟，报警一次
-			logo.JsonW("state", "normal", "lastingTime", now.Sub(my.lagTime).String(), "lag", lag.String(), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", formatMessageTime(msg.Time))
+		} else if now.After(my.nextWarnTime) { // 每间隔1分钟，报警一次
+			var lasting = now.Sub(my.startLagTime)
+			logo.JsonW("lasting", timex.FormatDuration(lasting), "lagged", timex.FormatDuration(lagged), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time))
 			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
 	}
@@ -81,9 +81,4 @@ func (my *readerMonitor) needCheck() bool {
 	}
 
 	return false
-}
-
-// kafka给设置的时间是UTC的，需要改成Local的，这样好接受一些
-func formatMessageTime(t time.Time) string {
-	return t.In(time.Local).Format(timex.Layout)
 }
