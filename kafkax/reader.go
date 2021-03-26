@@ -27,7 +27,6 @@ type Reader struct {
 	config      kafka.ReaderConfig
 	messageChan chan Message
 	wc          loom.WaitClose
-	monitor     *readerMonitor
 }
 
 func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader {
@@ -62,19 +61,23 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 	var my = &Reader{
 		config:      config,
 		messageChan: make(chan Message, args.messageChanSize),
-		monitor:     newReaderMonitory(args.monitorLagLimit),
 	}
 
 	var reader = kafka.NewReader(config)
 	my.setReader(reader)
-	loom.Go(my.goRead)
+
+	go my.goRead(args)
 	return my
 }
 
-func (my *Reader) goRead(later loom.Later) {
+func (my *Reader) goRead(args readerArguments) {
+	defer loom.DumpIfPanic()
 	defer my.Close()
 
 	var ctx = context.Background()
+	var lagMonitor = newReaderLagMonitor(args.monitorLagLimit)
+	var offsetMonitor = &readerOffsetMonitor{}
+
 	for !my.wc.IsClosed() {
 		var reader = my.Reader()
 		var msg, err = reader.FetchMessage(ctx)
@@ -85,7 +88,8 @@ func (my *Reader) goRead(later loom.Later) {
 		}
 
 		if err == nil {
-			my.monitor.checkConsumeLag(msg)
+			lagMonitor.checkConsumeLag(msg)
+			offsetMonitor.checkOffset(msg)
 		}
 	}
 }

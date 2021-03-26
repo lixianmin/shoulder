@@ -15,7 +15,7 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 // 监控消费延迟
-type readerMonitor struct {
+type readerLagMonitor struct {
 	state        int
 	lagLimit     time.Duration
 	eventCounter int
@@ -25,8 +25,8 @@ type readerMonitor struct {
 	nextWarnTime time.Time
 }
 
-func newReaderMonitory(lagLimit time.Duration) *readerMonitor {
-	var my = &readerMonitor{
+func newReaderLagMonitor(lagLimit time.Duration) *readerLagMonitor {
+	var my = &readerLagMonitor{
 		state:    monitorStateNormal,
 		lagLimit: lagLimit,
 	}
@@ -34,7 +34,7 @@ func newReaderMonitory(lagLimit time.Duration) *readerMonitor {
 	return my
 }
 
-func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
+func (my *readerLagMonitor) checkConsumeLag(msg kafka.Message) {
 	if !my.needCheck() {
 		return
 	}
@@ -73,7 +73,7 @@ func (my *readerMonitor) checkConsumeLag(msg kafka.Message) {
 	}
 }
 
-func (my *readerMonitor) needCheck() bool {
+func (my *readerLagMonitor) needCheck() bool {
 	my.checkEvery++
 	if my.checkEvery > 10 {
 		my.checkEvery = 0
