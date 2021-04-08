@@ -7,7 +7,7 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/frankban/quicktest v1.11.1 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
-	github.com/hashicorp/consul/api v1.8.0
+	github.com/hashicorp/consul/api v1.8.1
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
