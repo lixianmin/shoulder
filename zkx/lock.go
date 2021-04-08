@@ -167,6 +167,12 @@ func (my *Lock) GetConn() *zk.Conn {
 	return my.conn
 }
 
+// lockPath只有在Lock()成功后才能拿到
 func (my *Lock) GetLockPath() string {
 	return my.lockPath
+}
+
+// path是NewLock()的时候传入的
+func (my *Lock) GetPath() string {
+	return my.path
 }
