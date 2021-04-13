@@ -11,6 +11,7 @@ type writerArguments struct {
 	batchSize    int
 	batchBytes   int64
 	batchTimeout time.Duration
+	async        bool
 }
 
 type WriterOption func(*writerArguments)
@@ -42,5 +43,11 @@ func WithBatchBytes(batchBytes int64) WriterOption {
 func WithBatchTimeout(batchTimeout time.Duration) WriterOption {
 	return func(args *writerArguments) {
 		args.batchTimeout = batchTimeout
+	}
+}
+
+func WithAsync(async bool) WriterOption {
+	return func(args *writerArguments) {
+		args.async = async
 	}
 }
