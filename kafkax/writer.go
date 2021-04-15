@@ -18,9 +18,9 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 	var args = writerArguments{
 		balancer:     &kafka.LeastBytes{},
 		requiredAcks: kafka.RequireAll,      // 默认值RequireAll，等待所有ISR成员的ack之后再返回Write()方法
-		batchSize:    128,                   // 这里也需要设置一下，其它地方要通过writer.BatchSize取这个值
+		batchSize:    128,                   // 需要设置一下，其它地方要通过writer.BatchSize取这个值
 		batchBytes:   1048576,               // 单批最大大小
-		batchTimeout: 10 * time.Millisecond, // 默认1s，这个必须要调小，否则每次写都需要等待1s
+		batchTimeout: 10 * time.Millisecond, // 默认1s：如果是同步写，则必须调小这个参数，否则每次写都要等待1s；如果是异步写，则不需要管这个参数
 	}
 
 	for _, opt := range options {
@@ -32,13 +32,19 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		Addr:         kafka.TCP(brokers...),
 		Topic:        topic,
 		Balancer:     args.balancer,
-		RequiredAcks: args.requiredAcks,
+		MaxAttempts:  10,
 		BatchSize:    args.batchSize,
-		BatchTimeout: args.batchTimeout,
 		BatchBytes:   args.batchBytes,
+		BatchTimeout: args.batchTimeout,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		RequiredAcks: args.requiredAcks,
 		Async:        args.async,
+		Completion:   nil,
+		Compression:  nil,
 		Logger:       &logger{PrintFunc: logo.GetLogger().Info},
 		ErrorLogger:  &logger{PrintFunc: logo.GetLogger().Error},
+		Transport:    nil,
 	}
 
 	return writer
