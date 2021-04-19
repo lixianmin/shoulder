@@ -42,10 +42,10 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		RequiredAcks: args.requiredAcks,
 		Async:        args.async,
 		Completion:   nil,
-		Compression:  nil,
-		Logger:       &logger{PrintFunc: logo.GetLogger().Info},
-		ErrorLogger:  &logger{PrintFunc: logo.GetLogger().Error},
-		Transport:    nil,
+		//Compression:  compress.Gzip,
+		Logger:      &logger{PrintFunc: logo.GetLogger().Info},
+		ErrorLogger: &logger{PrintFunc: logo.GetLogger().Error},
+		Transport:   nil,
 	}
 
 	return writer
