@@ -18,10 +18,13 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 	// http://www.mobabel.net/%E6%80%BB%E7%BB%93kafka%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%92%8C%E5%8F%82%E6%95%B0%E8%B0%83%E4%BC%98/
 	var args = writerArguments{
 		balancer:     &kafka.LeastBytes{},
-		requiredAcks: kafka.RequireAll,      // 默认值RequireAll，等待所有ISR成员的ack之后再返回Write()方法
 		batchSize:    128,                   // 需要设置一下，其它地方要通过writer.BatchSize取这个值
 		batchBytes:   1048576,               // 单批最大大小
 		batchTimeout: 10 * time.Millisecond, // 默认1s：如果是同步写，则必须调小这个参数，否则每次写都要等待1s；如果是异步写，则不需要管这个参数
+		readTimeout:  10 * time.Second,      //
+		writeTimeout: 10 * time.Second,      //
+		requiredAcks: kafka.RequireAll,      // 默认值RequireAll，等待所有ISR成员的ack之后再返回Write()方法
+		async:        false,
 	}
 
 	for _, opt := range options {
@@ -37,8 +40,8 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		BatchSize:    args.batchSize,
 		BatchBytes:   args.batchBytes,
 		BatchTimeout: args.batchTimeout,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  args.readTimeout,
+		WriteTimeout: args.writeTimeout,
 		RequiredAcks: args.requiredAcks,
 		Async:        args.async,
 		Completion:   nil,
