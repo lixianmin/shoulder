@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/dgraph-io/ristretto v0.0.3
-	github.com/frankban/quicktest v1.11.1 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
@@ -18,9 +17,8 @@ require (
 	github.com/lixianmin/logo v0.0.0-20210326030107-ae8a75a89598
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
-	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/segmentio/kafka-go v0.4.13
+	github.com/segmentio/kafka-go v0.4.16
 	github.com/shima-park/agollo v1.2.10
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
