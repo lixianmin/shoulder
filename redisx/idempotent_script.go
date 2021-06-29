@@ -15,14 +15,14 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 type IdempotentScript struct {
-	scripter      redis.Scripter
+	db            redis.Scripter
 	expireSeconds string
 }
 
-func NewIdempotentScript(scripter redis.Scripter, expire time.Duration) *IdempotentScript {
+func NewIdempotentScript(scripter redis.Scripter, expiration time.Duration) *IdempotentScript {
 	var my = &IdempotentScript{
-		scripter:      scripter,
-		expireSeconds: strconv.FormatFloat(expire.Seconds(), 'f', -1, 64),
+		db:            scripter,
+		expireSeconds: strconv.FormatFloat(expiration.Seconds(), 'f', -1, 64),
 	}
 
 	return my
@@ -48,7 +48,7 @@ end
 return tonumber(redis.call('get', key));
 `
 	var keys = key.getKeys(my.expireSeconds)
-	var ret = my.scripter.Eval(ctx, script, keys)
+	var ret = my.db.Eval(ctx, script, keys)
 	return ret
 }
 
@@ -72,7 +72,7 @@ end
 return tonumber(redis.call('get', key));
 `
 	var keys = key.getKeys(my.expireSeconds)
-	var ret = my.scripter.Eval(ctx, script, keys, strconv.Itoa(delta))
+	var ret = my.db.Eval(ctx, script, keys, strconv.Itoa(delta))
 	return ret
 }
 
