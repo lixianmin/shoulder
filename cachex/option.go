@@ -37,7 +37,7 @@ func WithMetrics(metrics bool) Option {
 	}
 }
 
-func WithOnEvict(onEvict func(key, conflict uint64, value interface{}, cost int64)) Option {
+func WithOnEvict(onEvict func(item *ristretto.Item)) Option {
 	return func(config *ristretto.Config) {
 		config.OnEvict = onEvict
 	}
