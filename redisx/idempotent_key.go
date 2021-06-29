@@ -1,5 +1,7 @@
 package redisx
 
+import "strconv"
+
 /********************************************************************
 created:    2021-06-29
 author:     lixianmin
@@ -14,6 +16,6 @@ type IdempotentKey struct {
 }
 
 func (my *IdempotentKey) getKeys(args ...string) []string {
-	var keys = append([]string{my.Key, itoa(int64(my.Partition)), itoa(my.Offset)}, args...)
+	var keys = append([]string{my.Key, strconv.FormatInt(int64(my.Partition), 10), strconv.FormatInt(my.Offset, 10)}, args...)
 	return keys
 }
