@@ -15,11 +15,11 @@ Copyright (C) - All Rights Reserved
 type HookFunc func(ctx context.Context, key string)
 
 type Client struct {
-	db       Cmdable
+	db       redis.Cmdable
 	postHook HookFunc
 }
 
-func NewClient(db Cmdable, postHook HookFunc) *Client {
+func NewClient(db redis.Cmdable, postHook HookFunc) *Client {
 	var my = &Client{
 		db:       db,
 		postHook: postHook,
@@ -28,7 +28,7 @@ func NewClient(db Cmdable, postHook HookFunc) *Client {
 	return my
 }
 
-func (my *Client) DB() Cmdable {
+func (my *Client) DB() redis.Cmdable {
 	return my.db
 }
 
