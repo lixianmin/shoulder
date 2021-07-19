@@ -76,7 +76,7 @@ func (my *Reader) goRead(args readerArguments) {
 
 	var ctx = context.Background()
 	var lagMonitor = newReaderLagMonitor(args.monitorLagLimit)
-	var offsetMonitor = newReaderOffsetMonitor()
+	//var offsetMonitor = newReaderOffsetMonitor()
 
 	for !my.wc.IsClosed() {
 		var reader = my.Reader()
@@ -89,7 +89,7 @@ func (my *Reader) goRead(args readerArguments) {
 
 		if err == nil {
 			lagMonitor.checkConsumeLag(reader, msg)
-			offsetMonitor.checkOffset(msg)
+			//offsetMonitor.checkOffset(msg)
 		}
 	}
 }
