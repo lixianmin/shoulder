@@ -87,7 +87,8 @@ func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, lagNum 
 	if processed > 0 {
 		estimateTime = lasting * time.Duration(lagNum/processed)
 	} else {
-		my.startLagNum = lagNum // 有的时候processed不大于0，很奇怪，但不知道为啥
+		logo.JsonW("processed", processed, "startLagNum", my.startLagNum, "lagNum", lagNum)
+		//my.startLagNum = lagNum // 有的时候processed不大于0，很奇怪，但不知道为啥
 	}
 
 	return estimateTime
