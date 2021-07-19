@@ -88,7 +88,7 @@ func (my *Reader) goRead(args readerArguments) {
 		}
 
 		if err == nil {
-			lagMonitor.checkConsumeLag(msg)
+			lagMonitor.checkConsumeLag(reader, msg)
 			offsetMonitor.checkOffset(msg)
 		}
 	}
