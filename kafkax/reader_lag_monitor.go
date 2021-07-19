@@ -21,6 +21,7 @@ type readerLagMonitor struct {
 	eventCounter int
 	checkEvery   int // 每多少次检查一下
 
+	startLagNum  int64
 	startLagTime time.Time
 	nextWarnTime time.Time
 }
@@ -54,6 +55,7 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 				my.state = monitorStateLagging
 				my.eventCounter = 0
 
+				my.startLagNum = stats.Lag
 				my.startLagTime = now
 				my.nextWarnTime = now.Add(warnInterval)
 			}
@@ -69,10 +71,24 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 		} else if now.After(my.nextWarnTime) { // 每间隔1分钟，报警一次
 			var lasting = now.Sub(my.startLagTime)
 			var stats = reader.Stats()
-			logo.JsonW("lasting", timex.FormatDuration(lasting), "lagNum", stats.Lag, "lagTime", timex.FormatDuration(lagTime), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time))
+			var estimate = my.calculateEstimateTime(lasting, stats.Lag)
+
+			logo.JsonW("lasting", timex.FormatDuration(lasting), "estimate", timex.FormatDuration(estimate), "lagNum", stats.Lag,
+				"lagTime", timex.FormatDuration(lagTime), "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time))
 			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
 	}
+}
+
+// 根据过去的处理速度，预估剩余处理时间
+func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, lagNum int64) time.Duration {
+	var estimateTime = time.Duration(0)
+	var processed = my.startLagNum - lagNum
+	if processed > 0 {
+		estimateTime = lasting * time.Duration(lagNum/processed)
+	}
+
+	return estimateTime
 }
 
 func (my *readerLagMonitor) needCheck() bool {
