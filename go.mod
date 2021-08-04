@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/dgraph-io/ristretto v0.1.0
-	github.com/go-redis/redis/v8 v8.11.0
+	github.com/go-redis/redis/v8 v8.11.1
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
