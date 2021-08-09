@@ -56,8 +56,7 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 				my.state = monitorStateLagging
 				my.eventCounter = 0
 
-				my.startStats = stats
-				my.startLagTime = now
+				my.resetStartStats(stats)
 				my.nextWarnTime = now.Add(warnInterval)
 			}
 		}
@@ -96,10 +95,18 @@ func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, current
 	if processed > 0 {
 		estimateTime = lasting * time.Duration(lagNum/processed)
 	} else {
-		logo.JsonW("processed", processed, "currentOffset", currentOffset, "startOffset", startOffset, "lagNum", lagNum)
+		logo.JsonW("title", "offset回退了", "processed", processed, "currentOffset", currentOffset, "startOffset", startOffset, "lagNum", lagNum)
+
+		// 虽然不是很清楚是什么原因导致的，但的确发现有些情况下currentOffset比startOffset还要小的情况，相当于是offset回溯了
+		my.resetStartStats(currentStats)
 	}
 
 	return estimateTime
+}
+
+func (my *readerLagMonitor) resetStartStats(stats kafka.ReaderStats) {
+	my.startStats = stats
+	my.startLagTime = time.Now()
 }
 
 func (my *readerLagMonitor) needCheck() bool {
