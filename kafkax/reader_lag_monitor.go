@@ -71,10 +71,10 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 			}
 		} else if now.After(my.nextWarnTime) { // 每间隔1分钟，报警一次
 			var lasting = now.Sub(my.startLagTime)
-			var stats = reader.Stats()
-			var estimate = my.calculateEstimateTime(lasting, stats)
+			var currentStats = reader.Stats()
+			var estimate = my.calculateEstimateTime(lasting, currentStats)
 
-			logo.JsonW("lasting", timex.FormatDuration(lasting), "estimate", timex.FormatDuration(estimate), "lagNum", stats.Lag, "lagTime", timex.FormatDuration(lagTime),
+			logo.JsonW("lasting", timex.FormatDuration(lasting), "estimate", timex.FormatDuration(estimate), "lagNum", currentStats.Lag, "lagTime", timex.FormatDuration(lagTime),
 				"topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "time", timex.FormatTime(msg.Time), "groupId", reader.Config().GroupID)
 			my.nextWarnTime = my.nextWarnTime.Add(warnInterval)
 		}
@@ -83,7 +83,7 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 
 // 根据过去的处理速度，预估剩余处理时间
 func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, currentStats kafka.ReaderStats) time.Duration {
-	var estimateTime time.Duration
+	var estimate time.Duration
 
 	var currentOffset = currentStats.Offset
 	var startOffset = my.startStats.Offset
@@ -93,7 +93,7 @@ func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, current
 	// offset之差是真正处理的个数
 	var processed = currentOffset - startOffset
 	if processed > 0 {
-		estimateTime = lasting * time.Duration(lagNum/processed)
+		estimate = lasting * time.Duration(lagNum/processed)
 	} else {
 		logo.JsonW("title", "offset回退了", "processed", processed, "currentOffset", currentOffset, "startOffset", startOffset, "lagNum", lagNum)
 
@@ -101,7 +101,12 @@ func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, current
 		my.resetStartStats(currentStats)
 	}
 
-	return estimateTime
+	// 现在有两个bug：
+	// 1. lasting与estimate相同
+	// 2. estimate一直为0.000s
+	logo.JsonI("processed", processed, "currentOffset", currentOffset, "startOffset", startOffset, "lasting", timex.FormatDuration(lasting),
+		"estimate", timex.FormatDuration(estimate), "lagNum", lagNum)
+	return estimate
 }
 
 func (my *readerLagMonitor) resetStartStats(stats kafka.ReaderStats) {

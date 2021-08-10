@@ -12,8 +12,8 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/lixianmin/got v0.0.0-20210806110326-9f07f37199af
-	github.com/lixianmin/logo v0.0.0-20210806110500-a6d874e753cd
+	github.com/lixianmin/got v0.0.0-20210809120637-8f62d207ceae
+	github.com/lixianmin/logo v0.0.0-20210809120748-a869ee4893e5
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
 	github.com/segmentio/kafka-go v0.4.17
