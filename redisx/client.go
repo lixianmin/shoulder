@@ -3,6 +3,7 @@ package redisx
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
+	"time"
 )
 
 /********************************************************************
@@ -70,6 +71,12 @@ func (my *Client) PFAdd(ctx context.Context, key string, els ...interface{}) *re
 
 func (my *Client) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
 	var ret = my.db.SAdd(ctx, key, members...)
+	my.checkPostHook(ctx, key)
+	return ret
+}
+
+func (my *Client) Set(ctx context.Context, key string, value int, expiration time.Duration) *redis.StatusCmd {
+	var ret = my.db.Set(ctx, key, value, expiration)
 	my.checkPostHook(ctx, key)
 	return ret
 }
