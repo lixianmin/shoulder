@@ -13,11 +13,11 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/lixianmin/got v0.0.0-20210810114541-381ad75e0801
-	github.com/lixianmin/logo v0.0.0-20210827035215-81b249c245d9
+	github.com/lixianmin/logo v0.0.0-20210827062118-e1d41414874c
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/segmentio/kafka-go v0.4.17
+	github.com/segmentio/kafka-go v0.4.19
 	github.com/shima-park/agollo v1.2.11
 	github.com/spf13/viper v1.8.1
 	github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a
