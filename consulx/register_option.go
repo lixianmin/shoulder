@@ -15,6 +15,12 @@ type registerArguments struct {
 	tags                           []string
 	checkInterval                  time.Duration
 	deregisterCriticalServiceAfter time.Duration
+	healthCheck                    HealthCheck
+}
+
+type HealthCheck struct {
+	HTTP string
+	GRPC string
 }
 
 type RegisterOption func(*registerArguments)
@@ -34,5 +40,11 @@ func WithCheckInterval(interval time.Duration) RegisterOption {
 func WithDeregisterCriticalServiceAfter(interval time.Duration) RegisterOption {
 	return func(args *registerArguments) {
 		args.deregisterCriticalServiceAfter = interval
+	}
+}
+
+func WithHealthCheck(check HealthCheck) RegisterOption {
+	return func(args *registerArguments) {
+		args.healthCheck = check
 	}
 }

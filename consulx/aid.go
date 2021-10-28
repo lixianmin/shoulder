@@ -53,7 +53,13 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 	//var hostIPArgument = strings.Replace(hostIp, ".", "-", -1)
 	//var nodeId = fmt.Sprintf("%v-%v-%v", name, hostIPArgument, port)
 	var nodeId = fmt.Sprintf("%v-%v:%v", name, hostIp, port)
-	var httpHealthUrl = fmt.Sprintf("http://%v:%v/health", hostIp, port)
+
+	// 设置默认的 health check
+	var healthCheck = args.healthCheck
+	if healthCheck.HTTP == "" && healthCheck.GRPC == "" {
+		healthCheck.HTTP = fmt.Sprintf("http://%v:%v/health", hostIp, port)
+	}
+
 	var reg = &api.AgentServiceRegistration{
 		ID:      nodeId,    // 服务节点的名称
 		Name:    name,      // 服务名称
@@ -62,7 +68,8 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 		Address: hostIp,    // 服务 hostIp
 		Check: &api.AgentServiceCheck{ // 健康检查
 			Interval:                       args.checkInterval.String(), // 健康检查间隔
-			HTTP:                           httpHealthUrl,
+			HTTP:                           healthCheck.HTTP,
+			GRPC:                           healthCheck.GRPC,
 			DeregisterCriticalServiceAfter: args.deregisterCriticalServiceAfter.String(), // 注销时间，相当于过期时间
 		},
 	}
