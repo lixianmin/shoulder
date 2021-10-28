@@ -57,9 +57,9 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 	// 设置默认的 health check
 	var healthCheckHttp, healthCheckGrpc = "", ""
 	switch args.healthCheck {
-	case HealthCheckByHTTP:
+	case HealthCheckHTTP:
 		healthCheckHttp = fmt.Sprintf("http://%s:%d/health", hostIp, port)
-	case HealthCheckByGRPC:
+	case HealthCheckGRPC:
 		healthCheckGrpc = fmt.Sprintf("%s:%d/%s", hostIp, port, name)
 	}
 

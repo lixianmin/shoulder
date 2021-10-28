@@ -18,9 +18,6 @@ type registerArguments struct {
 	healthCheck                    int
 }
 
-const HealthCheckByHTTP = 1
-const HealthCheckByGRPC = 2
-
 type RegisterOption func(*registerArguments)
 
 func WithTags(tags ...string) RegisterOption {
