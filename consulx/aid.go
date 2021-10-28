@@ -41,6 +41,7 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 		tags:                           []string{},
 		checkInterval:                  10 * time.Second,
 		deregisterCriticalServiceAfter: 1 * time.Minute,
+		healthCheck:                    HealthCheckHTTP,
 	}
 
 	for _, opt := range options {
