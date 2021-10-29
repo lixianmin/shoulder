@@ -11,7 +11,6 @@ require (
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/lixianmin/got v0.0.0-20211026072108-8dfdaad49910
 	github.com/lixianmin/logo v0.0.0-20211026072329-ec3080d13468
 	github.com/mbobakov/grpc-consul-resolver v1.4.4
