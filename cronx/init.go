@@ -19,7 +19,7 @@ Copyright (C) - All Rights Reserved
 // 30 10 * * *   -> 每天早上10:30
 //////////////////////////////////////////////////////////////////////
 
-func NewNginx() *cron.Cron {
+func NewLinux() *cron.Cron {
 	var my = cron.New(cron.WithChain(cron.Recover(&Logger{})))
 	return my
 }
