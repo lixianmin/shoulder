@@ -13,6 +13,7 @@ require (
 	github.com/lixianmin/logo v0.0.0-20220104083555-e6fac75e3a5f
 	github.com/mbobakov/grpc-consul-resolver v1.4.4
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
+	github.com/prometheus/client_golang v1.7.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
 	github.com/segmentio/kafka-go v0.4.23

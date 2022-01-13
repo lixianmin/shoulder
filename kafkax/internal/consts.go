@@ -11,3 +11,5 @@ const (
 	monitorStateNormal = iota
 	monitorStateLagging
 )
+
+const metricsNamespace = "kafka_go"

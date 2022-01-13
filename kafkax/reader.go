@@ -67,30 +67,42 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 	var reader = kafka.NewReader(config)
 	my.setReader(reader)
 
-	go my.goRead(args)
+	loom.Go(func(later loom.Later) {
+		my.goRead(later, args)
+	})
 	return my
 }
 
-func (my *Reader) goRead(args readerArguments) {
-	defer loom.DumpIfPanic()
+func (my *Reader) goRead(later loom.Later, args readerArguments) {
 	defer my.Close()
 
 	var ctx = context.Background()
 	var lagMonitor = internal.NewReaderLagMonitor(args.monitorLagLimit)
 	//var offsetMonitor = NewReaderOffsetMonitor()
 
-	for !my.wc.IsClosed() {
-		var reader = my.Reader()
-		var msg, err = reader.FetchMessage(ctx)
+	var metrics = internal.NewReaderMetrics(args.groupId, my.Reader())
+	var metricsTicker = later.NewTicker(time.Second)
 
-		my.messageChan <- Message{
-			Message: msg,
-			Err:     err,
-		}
+	for {
+		select {
+		case <-metricsTicker.C:
+			metrics.Stats()
+			break
+		case <-my.wc.C():
+			return
+		default:
+			var reader = my.Reader()
+			var msg, err = reader.FetchMessage(ctx)
 
-		if err == nil {
-			lagMonitor.CheckConsumeLag(reader, msg)
-			//offsetMonitor.checkOffset(msg)
+			my.messageChan <- Message{
+				Message: msg,
+				Err:     err,
+			}
+
+			if err == nil {
+				lagMonitor.CheckConsumeLag(reader, msg)
+				//offsetMonitor.checkOffset(msg)
+			}
 		}
 	}
 }
