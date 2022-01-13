@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/lixianmin/got/loom"
 	"github.com/lixianmin/logo"
+	"github.com/lixianmin/shoulder/kafkax/internal"
 	"github.com/segmentio/kafka-go"
 	"os"
 	"path/filepath"
@@ -53,8 +54,8 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		MinBytes:    args.minBytes,
 		MaxBytes:    args.maxBytes,
 		StartOffset: args.startOffset,
-		Logger:      &logger{PrintFunc: logo.GetLogger().Info},
-		ErrorLogger: &logger{PrintFunc: logo.GetLogger().Error},
+		Logger:      &internal.Logger{PrintFunc: logo.GetLogger().Info},
+		ErrorLogger: &internal.Logger{PrintFunc: logo.GetLogger().Error},
 	}
 
 	// 创建对象
@@ -75,8 +76,8 @@ func (my *Reader) goRead(args readerArguments) {
 	defer my.Close()
 
 	var ctx = context.Background()
-	var lagMonitor = newReaderLagMonitor(args.monitorLagLimit)
-	//var offsetMonitor = newReaderOffsetMonitor()
+	var lagMonitor = internal.NewReaderLagMonitor(args.monitorLagLimit)
+	//var offsetMonitor = NewReaderOffsetMonitor()
 
 	for !my.wc.IsClosed() {
 		var reader = my.Reader()
@@ -88,7 +89,7 @@ func (my *Reader) goRead(args readerArguments) {
 		}
 
 		if err == nil {
-			lagMonitor.checkConsumeLag(reader, msg)
+			lagMonitor.CheckConsumeLag(reader, msg)
 			//offsetMonitor.checkOffset(msg)
 		}
 	}

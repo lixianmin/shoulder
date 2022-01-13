@@ -2,6 +2,7 @@ package kafkax
 
 import (
 	"github.com/lixianmin/logo"
+	"github.com/lixianmin/shoulder/kafkax/internal"
 	"github.com/segmentio/kafka-go"
 	"time"
 )
@@ -46,8 +47,8 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *kafka.W
 		Async:        args.async,
 		Completion:   nil,
 		//Compression:  compress.Gzip,
-		Logger:      &logger{PrintFunc: logo.GetLogger().Info},
-		ErrorLogger: &logger{PrintFunc: logo.GetLogger().Error},
+		Logger:      &internal.Logger{PrintFunc: logo.GetLogger().Info},
+		ErrorLogger: &internal.Logger{PrintFunc: logo.GetLogger().Error},
 		Transport:   nil,
 	}
 

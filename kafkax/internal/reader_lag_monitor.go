@@ -1,4 +1,4 @@
-package kafkax
+package internal
 
 import (
 	"github.com/lixianmin/got/timex"
@@ -14,8 +14,8 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-// 监控消费延迟
-type readerLagMonitor struct {
+// ReaderLagMonitor 监控消费延迟
+type ReaderLagMonitor struct {
 	state        int
 	lagLimit     time.Duration
 	eventCounter int
@@ -26,8 +26,8 @@ type readerLagMonitor struct {
 	nextWarnTime time.Time
 }
 
-func newReaderLagMonitor(lagLimit time.Duration) *readerLagMonitor {
-	var my = &readerLagMonitor{
+func NewReaderLagMonitor(lagLimit time.Duration) *ReaderLagMonitor {
+	var my = &ReaderLagMonitor{
 		state:    monitorStateNormal,
 		lagLimit: lagLimit,
 	}
@@ -35,7 +35,7 @@ func newReaderLagMonitor(lagLimit time.Duration) *readerLagMonitor {
 	return my
 }
 
-func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Message) {
+func (my *ReaderLagMonitor) CheckConsumeLag(reader *kafka.Reader, msg kafka.Message) {
 	if !my.needCheck() {
 		return
 	}
@@ -82,7 +82,7 @@ func (my *readerLagMonitor) checkConsumeLag(reader *kafka.Reader, msg kafka.Mess
 }
 
 // 根据过去的处理速度，预估剩余处理时间
-func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, currentStats kafka.ReaderStats) time.Duration {
+func (my *ReaderLagMonitor) calculateEstimateTime(lasting time.Duration, currentStats kafka.ReaderStats) time.Duration {
 	var estimate time.Duration
 
 	var currentOffset = currentStats.Offset
@@ -109,12 +109,12 @@ func (my *readerLagMonitor) calculateEstimateTime(lasting time.Duration, current
 	return estimate
 }
 
-func (my *readerLagMonitor) resetStartStats(stats kafka.ReaderStats) {
+func (my *ReaderLagMonitor) resetStartStats(stats kafka.ReaderStats) {
 	my.startStats = stats
 	my.startLagTime = time.Now()
 }
 
-func (my *readerLagMonitor) needCheck() bool {
+func (my *ReaderLagMonitor) needCheck() bool {
 	my.checkEvery++
 	if my.checkEvery > 10 {
 		my.checkEvery = 0

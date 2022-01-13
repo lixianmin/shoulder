@@ -1,4 +1,4 @@
-package kafkax
+package internal
 
 import (
 	"github.com/lixianmin/got/timex"
@@ -17,19 +17,19 @@ compact被去除了，所以，两个紧邻的消息之间的offset差就不是1
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-type readerOffsetMonitor struct {
+type ReaderOffsetMonitor struct {
 	lastOffsets map[int]int64
 }
 
-func newReaderOffsetMonitor() *readerOffsetMonitor {
-	var my = &readerOffsetMonitor{
+func NewReaderOffsetMonitor() *ReaderOffsetMonitor {
+	var my = &ReaderOffsetMonitor{
 		lastOffsets: make(map[int]int64, 4),
 	}
 
 	return my
 }
 
-func (my *readerOffsetMonitor) checkOffset(msg kafka.Message) {
+func (my *ReaderOffsetMonitor) checkOffset(msg kafka.Message) {
 	var partition = msg.Partition
 	var lastOffset = my.lastOffsets[partition]
 
