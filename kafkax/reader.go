@@ -80,18 +80,17 @@ func (my *Reader) goRead(later loom.Later, args readerArguments) {
 	var lagMonitor = internal.NewReaderLagMonitor(args.monitorLagLimit)
 	//var offsetMonitor = NewReaderOffsetMonitor()
 
-	var metrics = internal.NewReaderMetrics(args.groupId, my.Reader())
+	var reader = my.Reader()
 	var metricsTicker = later.NewTicker(time.Second)
 
 	for {
 		select {
 		case <-metricsTicker.C:
-			metrics.Stats()
+			internal.TakeReaderStats(reader, args.groupId)
 			break
 		case <-my.wc.C():
 			return
 		default:
-			var reader = my.Reader()
 			var msg, err = reader.FetchMessage(ctx)
 
 			my.messageChan <- Message{

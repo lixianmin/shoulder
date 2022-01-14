@@ -68,13 +68,13 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *Writer 
 func (my *Writer) goLoop(later loom.Later) {
 	defer my.Close()
 
-	var metrics = internal.NewWriterMetrics(my.Writer())
+	var writer = my.Writer()
 	var metricsTicker = later.NewTicker(time.Second)
 
 	for {
 		select {
 		case <-metricsTicker.C:
-			metrics.Stats()
+			internal.TakeWriterStats(writer)
 		case <-my.wc.C():
 			return
 		}
