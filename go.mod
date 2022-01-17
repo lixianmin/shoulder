@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/segmentio/kafka-go v0.4.23
+	github.com/segmentio/kafka-go v0.4.26
 	github.com/shima-park/agollo v1.2.12
 	github.com/spf13/viper v1.10.1
 	github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a
