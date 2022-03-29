@@ -32,6 +32,8 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *Writer 
 		writeTimeout: 10 * time.Second,      //
 		requiredAcks: kafka.RequireAll,      // 默认值RequireAll，等待所有ISR成员的ack之后再返回Write()方法
 		async:        false,
+		logger:       &internal.Logger{PrintFunc: logo.GetLogger().Info},
+		errorLogger:  &internal.Logger{PrintFunc: logo.GetLogger().Error},
 	}
 
 	for _, opt := range options {
@@ -53,8 +55,8 @@ func NewWriter(brokers []string, topic string, options ...WriterOption) *Writer 
 		Async:        args.async,
 		Completion:   nil,
 		//Compression:  compress.Gzip,
-		Logger:      &internal.Logger{PrintFunc: logo.GetLogger().Info},
-		ErrorLogger: &internal.Logger{PrintFunc: logo.GetLogger().Error},
+		Logger:      args.logger,
+		ErrorLogger: args.errorLogger,
 		Transport:   nil,
 	}
 

@@ -40,6 +40,8 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		startOffset:     kafka.FirstOffset, // 设置startOffset这事，只有在第一次进程的时候起作用，后续offset值会存储到zk中，如果想重新刷一遍数据的话，需要换一个group
 		messageChanSize: 128,
 		monitorLagLimit: time.Minute,
+		logger:          &internal.Logger{PrintFunc: logo.GetLogger().Info},
+		errorLogger:     &internal.Logger{PrintFunc: logo.GetLogger().Error},
 	}
 
 	for _, opt := range options {
@@ -54,8 +56,8 @@ func NewReader(brokers []string, topic string, options ...ReaderOption) *Reader 
 		MinBytes:    args.minBytes,
 		MaxBytes:    args.maxBytes,
 		StartOffset: args.startOffset,
-		Logger:      &internal.Logger{PrintFunc: logo.GetLogger().Info},
-		ErrorLogger: &internal.Logger{PrintFunc: logo.GetLogger().Error},
+		Logger:      args.logger,
+		ErrorLogger: args.errorLogger,
 	}
 
 	// 创建对象
