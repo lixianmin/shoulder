@@ -66,7 +66,7 @@ func newOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, process
 		consumer.WithNameServer(nameServers),
 		consumer.WithConsumerModel(consumer.Clustering), // 这个是默认值
 		consumer.WithConsumeFromWhere(consumer.ConsumeFromFirstOffset),
-		consumer.WithConsumeMessageBatchMaxSize(1), // 这个是ConsumerHandler中messages这个list的最大长度
+		//consumer.WithConsumeMessageBatchMaxSize(1), // 这个是ConsumerHandler中messages这个list的最大长度
 		consumer.WithConsumerOrder(true),
 	)
 
