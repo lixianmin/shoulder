@@ -10,7 +10,7 @@ Copyright (C) - All Rights Reserved
 import (
 	"fmt"
 	"github.com/hashicorp/consul/api"
-	"github.com/lixianmin/shoulder/cachex"
+	"github.com/lixianmin/got/cachex"
 	"math/rand"
 	"time"
 )
@@ -19,13 +19,13 @@ type Aid struct {
 	addressList []string // consul服务器地址列表，含端口："127.0.0.1:8500"
 	client      *api.Client
 	errClient   error
-	cache       *cachex.Cache
+	cache       cachex.Cache
 }
 
 func NewAid(addressList []string) *Aid {
 	var aid = &Aid{
 		addressList: addressList,
-		cache:       cachex.NewCache(10000, 1024*1024),
+		cache:       cachex.NewCache(cachex.WithExpire(10*time.Second, 1*time.Second)),
 	}
 
 	aid.client, aid.errClient = createConsulClient(addressList)
@@ -86,16 +86,15 @@ func (aid *Aid) RegisterService(name string, port int, options ...RegisterOption
 }
 
 func (aid *Aid) GetService(name string) (*api.AgentService, error) {
-
-	var item = aid.cache.Load(name, func() (interface{}, time.Duration) {
+	var item, err = aid.cache.Load(name, func(key interface{}) (interface{}, error) {
 		if aid.errClient != nil {
-			return aid.errClient, time.Second
+			return nil, aid.errClient
 		}
 
 		var health = aid.client.Health()
 		entries, _, err := health.Service(name, "", true, nil)
 		if err != nil {
-			return err, time.Second
+			return nil, err
 		}
 
 		var services = make([]*api.AgentService, len(entries))[:0]
@@ -104,17 +103,15 @@ func (aid *Aid) GetService(name string) (*api.AgentService, error) {
 			services = append(services, entry.Service)
 		}
 
-		return services, 5 * time.Second
-	})
+		return services, nil
+	}).Get2()
+	if err != nil {
+		return nil, err
+	}
 
-	switch item := item.(type) {
-	case error:
-		return nil, item
-	case []*api.AgentService:
-		if len(item) > 0 {
-			var service = getRandomService(item)
-			return service, nil
-		}
+	if services, ok := item.([]*api.AgentService); ok {
+		var service = getRandomService(services)
+		return service, nil
 	}
 
 	return nil, fmt.Errorf("found no service with name=%s", name)
