@@ -7,6 +7,7 @@ import (
 	"github.com/apache/rocketmq-client-go/v2/producer"
 	"github.com/lixianmin/got/convert"
 	"github.com/lixianmin/got/loom"
+	"github.com/lixianmin/got/osx"
 )
 
 /********************************************************************
@@ -62,11 +63,14 @@ func (my *Producer) Close() error {
 }
 
 func newProducer(nameServers []string) (rocketmq.Producer, error) {
-	var group = ServiceName()
+	var group = osx.BaseName()
+	var instance = osx.GetGPID(0)
+
 	var p, err = rocketmq.NewProducer(
 		producer.WithNameServer(nameServers),
 		producer.WithRetry(2),
 		producer.WithGroupName(group),
+		producer.WithInstanceName(instance),
 		producer.WithQueueSelector(producer.NewHashQueueSelector()), // 使用hash路由, 目的是为了将所有同user id的消息发送到同一个queue中.
 		//producer.WithDefaultTopicQueueNums(16),                      // 线上不建议自动创建topic, 写在这只是为了覆盖默认值(4). ---- 实测无效, 自动创建的topic中queue仍然是4
 	)

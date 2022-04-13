@@ -59,7 +59,7 @@ func newOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, process
 
 	var group = osx.BaseName()
 	var instance = osx.GetGPID(0)
-	
+
 	c, _ := rocketmq.NewPushConsumer(
 		consumer.WithGroupName(group),
 		consumer.WithInstance(instance), // 同一个group内的多个consumer不能同名

@@ -7,6 +7,7 @@ import (
 	"github.com/apache/rocketmq-client-go/v2/producer"
 	"github.com/lixianmin/got/convert"
 	"github.com/lixianmin/got/loom"
+	"github.com/lixianmin/got/osx"
 )
 
 /********************************************************************
@@ -66,12 +67,15 @@ func newTransactionProducer(nameServers []string, listener primitive.Transaction
 		panic("listener is nil")
 	}
 
-	var group = ServiceName()
+	var group = osx.BaseName()
+	var instance = osx.GetGPID(0)
+
 	var p, err = rocketmq.NewTransactionProducer(listener,
 		producer.WithNameServer(nameServers),
 		producer.WithRetry(10),
 		producer.WithQueueSelector(producer.NewHashQueueSelector()), // 使用hash路由, 目的是为了将所有同user id的消息发送到同一个queue中.
 		producer.WithGroupName(group),                               // 事务消息必须加group
+		producer.WithInstanceName(instance),
 	)
 
 	if err != nil {
