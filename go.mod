@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/lixianmin/gloom v0.0.0-20220329075222-4c6e01796c87
-	github.com/lixianmin/got v0.0.0-20220401071242-5f44168350a6
+	github.com/lixianmin/got v0.0.0-20220413073119-7e7146fc54c1
 	github.com/lixianmin/logo v0.0.0-20220312101552-e8698998a047
 	github.com/mbobakov/grpc-consul-resolver v1.4.4
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect

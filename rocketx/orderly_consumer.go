@@ -6,6 +6,7 @@ import (
 	"github.com/apache/rocketmq-client-go/v2/consumer"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"github.com/lixianmin/got/loom"
+	"github.com/lixianmin/got/osx"
 )
 
 /********************************************************************
@@ -56,9 +57,12 @@ func newOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, process
 		panic("process is nil")
 	}
 
-	var group = ServiceName()
+	var group = osx.BaseName()
+	var instance = osx.GetGPID(0)
+	
 	c, _ := rocketmq.NewPushConsumer(
 		consumer.WithGroupName(group),
+		consumer.WithInstance(instance), // 同一个group内的多个consumer不能同名
 		consumer.WithNameServer(nameServers),
 		consumer.WithConsumerModel(consumer.Clustering), // 这个是默认值
 		consumer.WithConsumeFromWhere(consumer.ConsumeFromFirstOffset),
