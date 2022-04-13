@@ -23,8 +23,8 @@ type TransactionProducer struct {
 	wc       loom.WaitClose
 }
 
-func NewTransactionProducer(nameServers primitive.NamesrvAddr, topic string, listener primitive.TransactionListener) *TransactionProducer {
-	var producer, err = newTransactionProducer(nameServers, listener)
+func NewTransactionProducer(topic string, listener primitive.TransactionListener, opts ...producer.Option) *TransactionProducer {
+	var producer, err = newTransactionProducer(listener, opts...)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func (my *TransactionProducer) Close() error {
 	})
 }
 
-func newTransactionProducer(nameServers []string, listener primitive.TransactionListener) (rocketmq.TransactionProducer, error) {
+func newTransactionProducer(listener primitive.TransactionListener, opts ...producer.Option) (rocketmq.TransactionProducer, error) {
 	if listener == nil {
 		panic("listener is nil")
 	}
@@ -70,14 +70,15 @@ func newTransactionProducer(nameServers []string, listener primitive.Transaction
 	var group = osx.BaseName()
 	var instance = osx.GetGPID(0)
 
-	var p, err = rocketmq.NewTransactionProducer(listener,
-		producer.WithNameServer(nameServers),
+	var options = append([]producer.Option{
+		producer.WithGroupName(group), // 事务消息必须加group
+		producer.WithInstanceName(instance),
+		//producer.WithNameServer(nameServers),
 		producer.WithRetry(10),
 		producer.WithQueueSelector(producer.NewHashQueueSelector()), // 使用hash路由, 目的是为了将所有同user id的消息发送到同一个queue中.
-		producer.WithGroupName(group),                               // 事务消息必须加group
-		producer.WithInstanceName(instance),
-	)
+	}, opts...)
 
+	var p, err = rocketmq.NewTransactionProducer(listener, options...)
 	if err != nil {
 		return nil, err
 	}

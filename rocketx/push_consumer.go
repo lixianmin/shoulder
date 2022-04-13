@@ -18,37 +18,13 @@ Copyright (C) - All Rights Reserved
 
 type ConsumerHandler func(ctx context.Context, messages ...*primitive.MessageExt) (consumer.ConsumeResult, error)
 
-type OrderlyConsumer struct {
+type PushConsumer struct {
 	consumer rocketmq.PushConsumer
 	topic    string
 	wc       loom.WaitClose
 }
 
-func NewOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, processor ConsumerHandler) *OrderlyConsumer {
-	var consumer, err = newOrderlyConsumer(nameServers, topic, processor)
-	if err != nil {
-		panic(err)
-	}
-
-	var my = &OrderlyConsumer{
-		consumer: consumer,
-		topic:    topic,
-	}
-
-	return my
-}
-
-func (my *OrderlyConsumer) Close() error {
-	return my.wc.Close(func() error {
-		return my.consumer.Shutdown()
-	})
-}
-
-func newOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, processor ConsumerHandler) (rocketmq.PushConsumer, error) {
-	if len(nameServers) == 0 {
-		panic("nameServers is empty")
-	}
-
+func NewPushConsumer(topic string, processor ConsumerHandler, opts ...consumer.Option) *PushConsumer {
 	if len(topic) == 0 {
 		panic("topic is empty")
 	}
@@ -57,19 +33,39 @@ func newOrderlyConsumer(nameServers primitive.NamesrvAddr, topic string, process
 		panic("process is nil")
 	}
 
+	var pushConsumer, err = newPushConsumer(topic, processor, opts...)
+	if err != nil {
+		panic(err)
+	}
+
+	var my = &PushConsumer{
+		consumer: pushConsumer,
+		topic:    topic,
+	}
+
+	return my
+}
+
+func (my *PushConsumer) Close() error {
+	return my.wc.Close(func() error {
+		return my.consumer.Shutdown()
+	})
+}
+
+func newPushConsumer(topic string, processor ConsumerHandler, opts ...consumer.Option) (rocketmq.PushConsumer, error) {
 	var group = osx.BaseName()
 	var instance = osx.GetGPID(0)
 
-	c, _ := rocketmq.NewPushConsumer(
+	var options = append([]consumer.Option{
 		consumer.WithGroupName(group),
 		consumer.WithInstance(instance), // 同一个group内的多个consumer不能同名
-		consumer.WithNameServer(nameServers),
-		consumer.WithConsumerModel(consumer.Clustering), // 这个是默认值
+		//consumer.WithNameServer(nameServers),
+		//consumer.WithConsumerModel(consumer.Clustering), // 这个是默认值
 		consumer.WithConsumeFromWhere(consumer.ConsumeFromFirstOffset),
 		//consumer.WithConsumeMessageBatchMaxSize(1), // 这个是ConsumerHandler中messages这个list的最大长度
-		consumer.WithConsumerOrder(true),
-	)
+	}, opts...)
 
+	c, _ := rocketmq.NewPushConsumer(options...)
 	var err = c.Subscribe(topic, consumer.MessageSelector{}, processor)
 	if err != nil {
 		return nil, err

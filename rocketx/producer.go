@@ -23,8 +23,8 @@ type Producer struct {
 	wc       loom.WaitClose
 }
 
-func NewProducer(nameServers primitive.NamesrvAddr, topic string) *Producer {
-	var producer, err = newProducer(nameServers)
+func NewProducer(topic string, opts ...producer.Option) *Producer {
+	var producer, err = newProducer(opts...)
 	if err != nil {
 		panic(err)
 	}
@@ -62,19 +62,20 @@ func (my *Producer) Close() error {
 	})
 }
 
-func newProducer(nameServers []string) (rocketmq.Producer, error) {
+func newProducer(opts ...producer.Option) (rocketmq.Producer, error) {
 	var group = osx.BaseName()
 	var instance = osx.GetGPID(0)
 
-	var p, err = rocketmq.NewProducer(
-		producer.WithNameServer(nameServers),
-		producer.WithRetry(2),
+	var options = append([]producer.Option{
 		producer.WithGroupName(group),
 		producer.WithInstanceName(instance),
+		//producer.WithNameServer(nameServers),
+		producer.WithRetry(2),
 		producer.WithQueueSelector(producer.NewHashQueueSelector()), // 使用hash路由, 目的是为了将所有同user id的消息发送到同一个queue中.
-		//producer.WithDefaultTopicQueueNums(16),                      // 线上不建议自动创建topic, 写在这只是为了覆盖默认值(4). ---- 实测无效, 自动创建的topic中queue仍然是4
-	)
+		//producer.WithDefaultTopicQueueNums(16),                    // 线上不建议自动创建topic, 写在这只是为了覆盖默认值(4). ---- 实测无效, 自动创建的topic中queue仍然是4
+	}, opts...)
 
+	var p, err = rocketmq.NewProducer(options...)
 	if err != nil {
 		return nil, err
 	}
