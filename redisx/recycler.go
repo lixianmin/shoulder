@@ -34,10 +34,11 @@ type recyclerItem struct {
 
 type Recycler struct {
 	client     *redis.Client // 这个必须是client, 因为很多操作需要立即拿到返回值. 但是, 像ZAdd这样的操作却不能全使用client, 否则有可能卡主流程的逻辑
-	expiration time.Duration //
+	expiration time.Duration // 每个key每次被访问后, 会重置过期时间
 	markTime   int64         // 标记时间, 第一次运行Recycler时把当前时间写入到redis中, 作为一个兜底的refreshTime
 	handler    RecyclerHandler
 	seenItems  sync.Map
+	tasks      *loom.TaskQueue
 	wc         loom.WaitClose
 }
 
@@ -64,15 +65,66 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 		handler:    args.handler,
 	}
 
+	my.tasks = loom.NewTaskQueue(loom.WithSize(128), loom.WithCloseChan(my.wc.C()))
 	my.checkSetMarkTime(args.markTimeKey)
+
+	loom.Go(my.goLoop)
 	loom.Go(func(later loom.Later) {
-		my.goLoop(later, args.markTimeKey)
+		my.goGarbageCollect(later, args.markTimeKey)
 	})
 
 	return my
 }
 
-func (my *Recycler) goLoop(later loom.Later, markTimeKey string) {
+// ZAdd 如果传入的client是一个pipeline, 则无法立即拿到返回值, 不满足gc等操作的需求. 但如果不使用pipeline则有可能会超时. 使用异步操作也许是一个办法
+func (my *Recycler) ZAdd(ctx context.Context, key string, members ...*redis.Z) {
+	if len(members) == 0 {
+		return
+	}
+
+	my.tasks.SendCallback(func(args interface{}) (interface{}, error) {
+		var refreshTimestamp = time.Now().Unix()
+		var values = make([]interface{}, 0, 2*len(members))
+		for _, member := range members {
+			values = append(values, member.Member, refreshTimestamp)
+		}
+
+		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
+
+		var aidKey = getRecyclerAidKey(key)
+		my.client.HSet(ctx, aidKey, values...)
+		my.client.Expire(ctx, aidKey, my.expiration)
+		return nil, nil
+	})
+}
+
+func (my *Recycler) ZIncrBy(ctx context.Context, key string, increment float64, member string) {
+	my.tasks.SendCallback(func(args interface{}) (interface{}, error) {
+		var refreshTimestamp = time.Now().Unix()
+		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
+
+		var aidKey = getRecyclerAidKey(key)
+		my.client.HSet(ctx, aidKey, member, refreshTimestamp)
+		my.client.Expire(ctx, aidKey, my.expiration)
+		return nil, nil
+	})
+}
+
+func (my *Recycler) goLoop(later loom.Later) {
+	var taskChan = my.tasks.C
+	var closeChan = my.wc.C()
+
+	for {
+		select {
+		case task := <-taskChan:
+			_ = task.Do(nil)
+		case <-closeChan:
+			return
+		}
+	}
+}
+
+func (my *Recycler) goGarbageCollect(later loom.Later, markTimeKey string) {
 	var checkInterval = minDuration(my.expiration/10, timex.Day)
 	var checkTicker = later.NewTicker(checkInterval)
 	var closeChan = my.wc.C()
@@ -102,33 +154,6 @@ func (my *Recycler) checkSetMarkTime(markTimeKey string) {
 	} else {
 		logo.JsonW("markTimeKey", markTimeKey, "err", err)
 	}
-}
-
-func (my *Recycler) ZAdd(ctx context.Context, key string, members ...*redis.Z) {
-	if len(members) == 0 {
-		return
-	}
-
-	var refreshTimestamp = time.Now().Unix()
-	var values = make([]interface{}, 0, 2*len(members))
-	for _, member := range members {
-		values = append(values, member.Member, refreshTimestamp)
-	}
-
-	my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
-
-	var aidKey = getRecyclerAidKey(key)
-	my.client.HSet(ctx, aidKey, values...)
-	my.client.Expire(ctx, aidKey, my.expiration)
-}
-
-func (my *Recycler) ZIncrBy(ctx context.Context, key string, increment float64, member string) {
-	var refreshTimestamp = time.Now().Unix()
-	my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
-
-	var aidKey = getRecyclerAidKey(key)
-	my.client.HSet(ctx, aidKey, member, refreshTimestamp)
-	my.client.Expire(ctx, aidKey, my.expiration)
 }
 
 // 防止key过期
