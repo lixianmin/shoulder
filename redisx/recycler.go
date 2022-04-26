@@ -33,7 +33,7 @@ type recyclerItem struct {
 }
 
 type Recycler struct {
-	client     redis.Cmdable // 这个有可能是client, 也有可能是pipeline
+	client     *redis.Client // 这个必须是client, 因为很多操作需要立即拿到返回值. 但是, 像ZAdd这样的操作却不能全使用client, 否则有可能卡主流程的逻辑
 	expiration time.Duration //
 	markTime   int64         // 标记时间, 第一次运行Recycler时把当前时间写入到redis中, 作为一个兜底的refreshTime
 	handler    RecyclerHandler
@@ -41,7 +41,7 @@ type Recycler struct {
 	wc         loom.WaitClose
 }
 
-func NewRecycler(client redis.Cmdable, options ...RecyclerOption) *Recycler {
+func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 	if client == nil {
 		panic("client is nil")
 	}
