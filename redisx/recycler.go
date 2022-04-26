@@ -33,15 +33,19 @@ type recyclerItem struct {
 }
 
 type Recycler struct {
-	client     *redis.Client
-	expiration time.Duration
-	markTime   int64 // 标记时间, 第一次运行Recycler时把当前时间写入到redis中, 作为一个兜底的refreshTime
+	client     redis.Cmdable // 这个有可能是client, 也有可能是pipeline
+	expiration time.Duration //
+	markTime   int64         // 标记时间, 第一次运行Recycler时把当前时间写入到redis中, 作为一个兜底的refreshTime
 	handler    RecyclerHandler
 	seenItems  sync.Map
 	wc         loom.WaitClose
 }
 
-func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
+func NewRecycler(client redis.Cmdable, options ...RecyclerOption) *Recycler {
+	if client == nil {
+		panic("client is nil")
+	}
+
 	var args = recyclerArguments{
 		expiration:  timex.Day,
 		markTimeKey: fmt.Sprintf("%s.%s.mark.time.key", osx.GetLocalIp(), osx.BaseName()),
