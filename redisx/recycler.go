@@ -53,6 +53,7 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 		handler: func(kind string, key string, field string) bool {
 			return false
 		},
+		taskQueueSize: 1024,
 	}
 
 	for _, opt := range options {
@@ -65,7 +66,7 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 		handler:    args.handler,
 	}
 
-	my.tasks = loom.NewTaskQueue(loom.WithSize(128), loom.WithCloseChan(my.wc.C()))
+	my.tasks = loom.NewTaskQueue(loom.WithSize(args.taskQueueSize), loom.WithCloseChan(my.wc.C()))
 	my.checkSetMarkTime(args.markTimeKey)
 
 	loom.Go(my.goLoop)

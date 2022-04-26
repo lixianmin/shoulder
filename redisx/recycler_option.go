@@ -6,9 +6,10 @@ import "time"
 type RecyclerHandler func(kind string, key string, field string) bool
 
 type recyclerArguments struct {
-	expiration  time.Duration
-	markTimeKey string
-	handler     RecyclerHandler
+	expiration    time.Duration
+	markTimeKey   string
+	handler       RecyclerHandler
+	taskQueueSize int
 }
 
 type RecyclerOption func(*recyclerArguments)
@@ -31,6 +32,14 @@ func WithRecyclerHandler(handler RecyclerHandler) RecyclerOption {
 	return func(args *recyclerArguments) {
 		if handler != nil {
 			args.handler = handler
+		}
+	}
+}
+
+func WithRecyclerTaskQueueSize(size int) RecyclerOption {
+	return func(args *recyclerArguments) {
+		if size > 0 {
+			args.taskQueueSize = size
 		}
 	}
 }
