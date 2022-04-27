@@ -177,7 +177,7 @@ func (my *Recycler) garbageCollect() {
 }
 
 func (my *Recycler) recycleZSet(item recyclerItem) {
-	var ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
+	var ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	var client = my.client
@@ -198,33 +198,40 @@ func (my *Recycler) recycleZSet(item recyclerItem) {
 	}
 
 	logo.JsonI("itemKey", itemKey, "itemNum", len(members), "aidKey", aidKey, "aidNum", aidNum)
-	var expireMoment = my.getExpireMoment().Unix()
 	for _, field := range members {
-		var refreshTime, err3 = my.fetchRefreshTime(ctx, aidKey, field)
-		if err3 != nil {
-			logo.JsonW("aidKey", aidKey, "field", field, "err3", err3)
-			continue
-		}
-
-		var isExpired = expireMoment > refreshTime
-		if !isExpired {
-			continue
-		}
-
-		var needRemove = my.handler(KindZSet, item.key, field)
-		if !needRemove {
-			continue
-		}
-
-		// 重复删除已经被删除过的field会返回0
-		var _, err4 = client.ZRem(ctx, item.key, field).Result()
-		if err4 != nil {
-			logo.JsonW("key", item.key, "field", field, "err4", err4)
-			continue
-		}
-
-		_ = client.HDel(ctx, aidKey, field)
+		my.recycleZSetField(item, aidKey, field)
 	}
+}
+
+func (my *Recycler) recycleZSetField(item recyclerItem, aidKey string, field string) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var refreshTime, err3 = my.fetchRefreshTime(ctx, aidKey, field)
+	if err3 != nil {
+		logo.JsonW("aidKey", aidKey, "field", field, "err3", err3)
+		return
+	}
+
+	var expireMoment = my.getExpireMoment().Unix()
+	var isExpired = expireMoment > refreshTime
+	if !isExpired {
+		return
+	}
+
+	var needRemove = my.handler(KindZSet, item.key, field)
+	if !needRemove {
+		return
+	}
+
+	// 重复删除已经被删除过的field会返回0
+	var _, err4 = my.client.ZRem(ctx, item.key, field).Result()
+	if err4 != nil {
+		logo.JsonW("key", item.key, "field", field, "err4", err4)
+		return
+	}
+
+	_ = my.client.HDel(ctx, aidKey, field)
 }
 
 func (my *Recycler) zRangeAll(ctx context.Context, key string) ([]string, error) {
