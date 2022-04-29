@@ -7,10 +7,10 @@ author:     lixianmin
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
-type Logger struct {
-	PrintFunc func(first interface{}, args ...interface{})
-}
-
-func (my *Logger) Printf(format string, args ...interface{}) {
-	my.PrintFunc(format, args...)
-}
+//type Logger struct {
+//	PrintFunc func(first string, args ...interface{})
+//}
+//
+//func (my *Logger) Printf(format string, args ...interface{}) {
+//	my.PrintFunc(format, args...)
+//}
