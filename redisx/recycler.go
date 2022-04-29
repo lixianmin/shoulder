@@ -78,7 +78,7 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 }
 
 // ZAdd 如果传入的client是一个pipeline, 则无法立即拿到返回值, 不满足gc等操作的需求. 但如果不使用pipeline则有可能会超时. 使用异步操作也许是一个办法
-func (my *Recycler) ZAdd(ctx context.Context, key string, members ...*redis.Z) {
+func (my *Recycler) ZAdd(key string, members ...*redis.Z) {
 	if len(members) == 0 {
 		return
 	}
@@ -92,21 +92,43 @@ func (my *Recycler) ZAdd(ctx context.Context, key string, members ...*redis.Z) {
 
 		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
 
+		var ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
 		var aidKey = getRecyclerAidKey(key)
-		my.client.HSet(ctx, aidKey, values...)
-		my.client.Expire(ctx, aidKey, my.expiration)
+		if err := my.client.HSet(ctx, aidKey, values...).Err(); err != nil {
+			logo.JsonW("aidKey", aidKey, "len(members)", len(members), "err", err)
+			return nil, err
+		}
+
+		if err := my.client.Expire(ctx, aidKey, my.expiration).Err(); err != nil {
+			logo.JsonW("aidKey", aidKey, "len(members)", len(members), "err", err)
+			return nil, err
+		}
+
 		return nil, nil
 	})
 }
 
-func (my *Recycler) ZIncrBy(ctx context.Context, key string, increment float64, member string) {
+func (my *Recycler) ZIncrBy(key string, increment float64, member string) {
 	my.tasks.SendCallback(func(args interface{}) (interface{}, error) {
 		var refreshTimestamp = time.Now().Unix()
 		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
 
 		var aidKey = getRecyclerAidKey(key)
-		my.client.HSet(ctx, aidKey, member, refreshTimestamp)
-		my.client.Expire(ctx, aidKey, my.expiration)
+
+		var ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := my.client.HSet(ctx, aidKey, member, refreshTimestamp).Err(); err != nil {
+			logo.JsonW("aidKey", aidKey, "member", member, "err", err)
+			return nil, err
+		}
+
+		if err := my.client.Expire(ctx, aidKey, my.expiration).Err(); err != nil {
+			logo.JsonW("aidKey", aidKey, "member", member, "err", err)
+			return nil, err
+		}
+
 		return nil, nil
 	})
 }
