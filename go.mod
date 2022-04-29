@@ -10,8 +10,8 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/lixianmin/gloom v0.0.0-20220329075222-4c6e01796c87
-	github.com/lixianmin/got v0.0.0-20220429094538-fdb6996f08cd
-	github.com/lixianmin/logo v0.0.0-20220312101552-e8698998a047
+	github.com/lixianmin/got v0.0.0-20220429101601-4b82ad931869
+	github.com/lixianmin/logo v0.0.0-20220429115123-e65bdedfb522
 	github.com/mbobakov/grpc-consul-resolver v1.4.4
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/prometheus/client_golang v1.7.1

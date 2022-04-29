@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/lixianmin/got/loom"
 	"github.com/lixianmin/got/osx"
+	"github.com/lixianmin/got/taskx"
 	"github.com/lixianmin/got/timex"
 	"github.com/lixianmin/logo"
 	"github.com/spf13/cast"
@@ -38,7 +39,7 @@ type Recycler struct {
 	markTime   int64         // 标记时间, 第一次运行Recycler时把当前时间写入到redis中, 作为一个兜底的refreshTime
 	handler    RecyclerHandler
 	seenItems  sync.Map
-	tasks      *loom.TaskQueue
+	tasks      *taskx.Queue
 	wc         loom.WaitClose
 }
 
@@ -66,7 +67,7 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 		handler:    args.handler,
 	}
 
-	my.tasks = loom.NewTaskQueue(loom.WithSize(args.taskQueueSize), loom.WithCloseChan(my.wc.C()))
+	my.tasks = taskx.NewQueue(taskx.WithSize(args.taskQueueSize), taskx.WithCloseChan(my.wc.C()), taskx.WithErrorLogger(logo.GetLogger().Warn))
 	my.checkSetMarkTime(args.markTimeKey)
 
 	loom.Go(my.goLoop)
