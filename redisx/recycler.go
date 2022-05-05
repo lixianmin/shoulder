@@ -19,6 +19,9 @@ import (
 created:    2022-04-24
 author:     lixianmin
 
+v1. 如果传入的client是一个pipeline, 则很多接口无法立即拿到返回值, 不满足gc等操作的需求.
+v2. 但如果不使用pipeline则有可能会超时, 改为使用异步, 但异步会受总RTT的限制, 必须改为pipeline
+
 Copyright (C) - All Rights Reserved
 *********************************************************************/
 
@@ -31,6 +34,11 @@ const (
 type recyclerItem struct {
 	kind string
 	key  string
+}
+
+type recyclerTaskArgument struct {
+	pipe redis.Pipeliner
+	ctx  context.Context
 }
 
 type Recycler struct {
@@ -78,7 +86,6 @@ func NewRecycler(client *redis.Client, options ...RecyclerOption) *Recycler {
 	return my
 }
 
-// ZAdd 如果传入的client是一个pipeline, 则无法立即拿到返回值, 不满足gc等操作的需求. 但如果不使用pipeline则有可能会超时. 使用异步操作也许是一个办法
 func (my *Recycler) ZAdd(key string, members ...*redis.Z) {
 	if len(members) == 0 {
 		return
@@ -93,20 +100,12 @@ func (my *Recycler) ZAdd(key string, members ...*redis.Z) {
 
 		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
 
-		var ctx, cancel = context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
 		var aidKey = getRecyclerAidKey(key)
-		if err := my.client.HSet(ctx, aidKey, values...).Err(); err != nil {
-			logo.JsonW("aidKey", aidKey, "len(members)", len(members), "err", err)
-			return nil, err
-		}
+		var taskArgument = args.(recyclerTaskArgument)
+		var pipe, ctx = taskArgument.pipe, taskArgument.ctx
 
-		if err := my.client.Expire(ctx, aidKey, my.expiration).Err(); err != nil {
-			logo.JsonW("aidKey", aidKey, "len(members)", len(members), "err", err)
-			return nil, err
-		}
-
+		pipe.HSet(ctx, aidKey, values...)
+		pipe.Expire(ctx, aidKey, my.expiration)
 		return nil, nil
 	})
 }
@@ -117,18 +116,11 @@ func (my *Recycler) ZIncrBy(key string, increment float64, member string) {
 		my.seenItems.Store(key, recyclerItem{kind: KindZSet, key: key})
 
 		var aidKey = getRecyclerAidKey(key)
+		var taskArgument = args.(recyclerTaskArgument)
+		var pipe, ctx = taskArgument.pipe, taskArgument.ctx
 
-		var ctx, cancel = context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		if err := my.client.HSet(ctx, aidKey, member, refreshTimestamp).Err(); err != nil {
-			logo.JsonW("aidKey", aidKey, "member", member, "err", err)
-			return nil, err
-		}
-
-		if err := my.client.Expire(ctx, aidKey, my.expiration).Err(); err != nil {
-			logo.JsonW("aidKey", aidKey, "member", member, "err", err)
-			return nil, err
-		}
+		pipe.HSet(ctx, aidKey, member, refreshTimestamp)
+		pipe.Expire(ctx, aidKey, my.expiration)
 
 		return nil, nil
 	})
@@ -138,10 +130,49 @@ func (my *Recycler) goLoop(later loom.Later) {
 	var taskChan = my.tasks.C
 	var closeChan = my.wc.C()
 
+	const batchSize = 256
+	var flush = NewFlushAid(batchSize, time.Second)
+	var tasks = make([]taskx.Task, 0, batchSize)
+
+	// 批量提交tasks中收集的任务
+	var commitTasks = func() bool {
+		if len(tasks) == 0 {
+			return true
+		}
+
+		var pipe = my.client.Pipeline()
+		defer pipe.Close()
+
+		var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		var args = recyclerTaskArgument{
+			pipe: pipe,
+			ctx:  ctx,
+		}
+
+		for _, task := range tasks {
+			_ = task.Do(args)
+		}
+
+		if err := execPipeline(ctx, pipe); err != nil {
+			logo.JsonW("err", err)
+			return false
+		}
+
+		tasks = tasks[:0]
+		return true
+	}
+
 	for {
 		select {
 		case task := <-taskChan:
-			_ = task.Do(nil)
+			tasks = append(tasks, task)
+
+			// 如果无法正确flush，采用back pressure策略
+			for flush.CanFlush(len(tasks)) && !commitTasks() {
+				time.Sleep(time.Second)
+			}
 		case <-closeChan:
 			return
 		}
