@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/apache/rocketmq-client-go/v2 v2.1.0
 	github.com/go-redis/redis/v8 v8.11.1
+	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/hashicorp/consul/api v1.12.0
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
