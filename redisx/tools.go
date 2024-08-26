@@ -3,10 +3,11 @@ package redisx
 import (
 	"context"
 	"errors"
-	"github.com/go-redis/redis/v8"
-	"github.com/lixianmin/got/convert"
-	"github.com/spf13/cast"
 	"strconv"
+
+	"github.com/lixianmin/got/convert"
+	"github.com/redis/go-redis/v9"
+	"github.com/spf13/cast"
 )
 
 /********************************************************************

@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
+	"sync"
+	"time"
+
 	"github.com/lixianmin/got/loom"
 	"github.com/lixianmin/got/osx"
 	"github.com/lixianmin/got/taskx"
 	"github.com/lixianmin/got/timex"
 	"github.com/lixianmin/logo"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
-	"sync"
-	"time"
 )
 
 /********************************************************************

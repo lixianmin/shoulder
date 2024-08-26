@@ -2,10 +2,11 @@ package redisx
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 /********************************************************************
@@ -54,7 +55,6 @@ func TestIdempotentScript_Incr(t *testing.T) {
 		t.Fail()
 	}
 }
-
 
 func TestIdempotentScript_IncrBy(t *testing.T) {
 	var red = createRedis()
