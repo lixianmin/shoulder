@@ -2,12 +2,13 @@ package redisx
 
 import (
 	"fmt"
-	"github.com/lixianmin/gloom"
-	"github.com/lixianmin/got/convert"
-	"github.com/lixianmin/got/timex"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/lixianmin/gloom"
+	"github.com/lixianmin/got/convert"
+	"github.com/lixianmin/got/timex"
 )
 
 func Benchmark_RedisBitSet(b *testing.B) {
@@ -55,7 +56,7 @@ func testBloomFilter(t *testing.T, estimatedKeys int, bloomFilter *gloom.BloomFi
 		}
 	}
 
-	var costTime = time.Now().Sub(startTime)
+	var costTime = time.Since(startTime)
 	fmt.Printf("estimatedKeys=%d, costTime=%s\n", estimatedKeys, timex.FormatDuration(costTime))
 }
 
