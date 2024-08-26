@@ -28,10 +28,6 @@ func NewPipeliner(pipeliner redis.Pipeliner, expiration time.Duration) *Pipeline
 	return my
 }
 
-func (my *Pipeliner) Close() error {
-	return my.db.Close()
-}
-
 func (my *Pipeliner) Exec(ctx context.Context) ([]redis.Cmder, error) {
 	return my.db.Exec(ctx)
 }
@@ -66,7 +62,7 @@ func (my *Pipeliner) LTrim(ctx context.Context, key string, start, stop int64) *
 	return ret
 }
 
-func (my *Pipeliner) PFAdd(ctx context.Context, key string, els ...interface{}) *redis.IntCmd {
+func (my *Pipeliner) PFAdd(ctx context.Context, key string, els ...any) *redis.IntCmd {
 	var ret = my.db.PFAdd(ctx, key, els...)
 	my.checkExpire(ctx, key)
 	return ret
@@ -77,13 +73,13 @@ func (my *Pipeliner) PFCount(ctx context.Context, keys ...string) *redis.IntCmd 
 	return ret
 }
 
-func (my *Pipeliner) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+func (my *Pipeliner) SAdd(ctx context.Context, key string, members ...any) *redis.IntCmd {
 	var ret = my.db.SAdd(ctx, key, members...)
 	my.checkExpire(ctx, key)
 	return ret
 }
 
-func (my *Pipeliner) ZAdd(ctx context.Context, key string, members ...*redis.Z) *redis.IntCmd {
+func (my *Pipeliner) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
 	var ret = my.db.ZAdd(ctx, key, members...)
 	my.checkExpire(ctx, key)
 	return ret

@@ -33,7 +33,7 @@ func (my *RedisBitSet) Set(offsets []uint) error {
 	defer cancel()
 
 	var pipe = my.redis.Pipeline()
-	defer pipe.Close()
+	// defer pipe.Close()
 
 	for _, offset := range offsets {
 		var cmd = pipe.SetBit(ctx, my.key, int64(offset), 1)
@@ -52,7 +52,7 @@ func (my *RedisBitSet) Test(offsets []uint) (bool, error) {
 	defer cancel()
 
 	var pipe = my.redis.Pipeline()
-	defer pipe.Close()
+	// defer pipe.Close()
 
 	for _, offset := range offsets {
 		var cmd = pipe.GetBit(ctx, my.key, int64(offset))

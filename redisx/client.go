@@ -82,7 +82,7 @@ func (my *Client) Set(ctx context.Context, key string, value int, expiration tim
 	return ret
 }
 
-func (my *Client) ZAdd(ctx context.Context, key string, members ...*redis.Z) *redis.IntCmd {
+func (my *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
 	var ret = my.db.ZAdd(ctx, key, members...)
 	my.checkPostHook(ctx, key)
 	return ret

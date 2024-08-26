@@ -142,7 +142,7 @@ func (my *Recycler) goLoop(later loom.Later) {
 		}
 
 		var pipe = my.client.Pipeline()
-		defer pipe.Close()
+		// defer pipe.Close()
 
 		var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
