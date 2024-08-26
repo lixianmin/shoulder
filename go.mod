@@ -6,7 +6,6 @@ toolchain go1.21.3
 
 require (
 	github.com/apache/rocketmq-client-go/v2 v2.1.0
-	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/hashicorp/consul/api v1.25.1
 	github.com/lixianmin/gloom v0.0.0-20220329075222-4c6e01796c87
 	github.com/lixianmin/got v0.0.0-20240110092725-35be0bed39c6
