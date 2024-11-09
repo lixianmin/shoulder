@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/lixianmin/got/loom"
-	"github.com/lixianmin/logo"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -22,6 +21,17 @@ type StreamMessage struct {
 	Id     string
 	Values map[string]any
 	Err    error
+
+	reader *StreamReader
+}
+
+// Ack 确认消息已被处理, 这个必须在message自己调用, 而不是直接基于返回值, 因为可能在回调方法中
+func (msg *StreamMessage) Ack(ctx context.Context) error {
+	if msg.reader == nil || msg.Err != nil {
+		return nil // 如果是错误消息或reader为nil，直接返回
+	}
+
+	return msg.reader.ack(ctx, msg.Id)
 }
 
 type StreamReader struct {
@@ -29,10 +39,10 @@ type StreamReader struct {
 	streamKey string
 	wc        loom.WaitClose
 	groupName string
-	handler   func(context.Context, StreamMessage) error
+	handler   func(context.Context, StreamMessage)
 }
 
-func NewStreamReader(client *redis.Client, streamKey string, handler func(context.Context, StreamMessage) error, options ...StreamReaderOption) *StreamReader {
+func NewStreamReader(client *redis.Client, streamKey string, handler func(context.Context, StreamMessage), options ...StreamReaderOption) *StreamReader {
 	if handler == nil {
 		panic("handler is required")
 	}
@@ -88,9 +98,10 @@ func (my *StreamReader) goRead(later loom.Later, args streamReaderArguments) {
 
 			if err != nil && err != redis.Nil {
 				// 处理错误消息
-				if err := my.processMessage(StreamMessage{Err: err}); err != nil {
-					logo.Error("Failed to handle error message: %v", err)
-				}
+				my.processMessage(StreamMessage{
+					Err:    err,
+					reader: my,
+				})
 				continue
 			}
 
@@ -100,34 +111,27 @@ func (my *StreamReader) goRead(later loom.Later, args streamReaderArguments) {
 					var message = StreamMessage{
 						Id:     msg.ID,
 						Values: msg.Values,
+						reader: my,
 					}
 
-					if err := my.processMessage(message); err != nil {
-						logo.Error("Failed to handle message %s: %v", msg.ID, err)
-						continue
-					}
-
-					// 处理成功后ack消息
-					if err := my.Ack(ctx, msg.ID); err != nil {
-						logo.Error("Failed to ack message %s: %v", msg.ID, err)
-					}
+					my.processMessage(message)
 				}
 			}
 		}
 	}
 }
 
-func (my *StreamReader) processMessage(message StreamMessage) error {
+func (my *StreamReader) processMessage(message StreamMessage) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	return my.handler(ctx, message)
+	my.handler(ctx, message)
 }
 
 func (my *StreamReader) Close() error {
 	return my.wc.Close(nil)
 }
 
-func (my *StreamReader) Ack(ctx context.Context, messageId string) error {
+func (my *StreamReader) ack(ctx context.Context, messageId string) error {
 	return my.client.XAck(ctx, my.streamKey, my.groupName, messageId).Err()
 }
