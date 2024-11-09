@@ -8,11 +8,11 @@ require (
 	github.com/apache/rocketmq-client-go/v2 v2.1.0
 	github.com/hashicorp/consul/api v1.28.2
 	github.com/lixianmin/gloom v0.0.0-20220329075222-4c6e01796c87
-	github.com/lixianmin/got v0.0.0-20240822063701-bd1423f90b73
+	github.com/lixianmin/got v0.0.0-20241022084720-9b9e479e6a53
 	github.com/lixianmin/logo v0.0.0-20240710025343-95c41a339972
 	github.com/mbobakov/grpc-consul-resolver v1.4.4
 	github.com/prometheus/client_golang v1.11.1
-	github.com/redis/go-redis/v9 v9.6.1
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
 	github.com/segmentio/kafka-go v0.4.17 // 0.4.17版本是比较稳定的. 昨天尝试升级到0.4.28后, 频繁报io.ErrNoProgress错误, 但看起来似乎没有影响功能
