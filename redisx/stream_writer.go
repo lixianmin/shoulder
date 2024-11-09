@@ -26,10 +26,8 @@ type StreamWriter struct {
 
 func NewStreamWriter(client *redis.Client, streamKey string, options ...StreamWriterOption) *StreamWriter {
 	var args = streamWriterArguments{
-		maxLen:      1000000,            // 默认100万条消息
-		maxAge:      7 * 24 * time.Hour, // 默认保存7天
-		logger:      logo.GetLogger().Info,
-		errorLogger: logo.GetLogger().Error,
+		maxLen: 1000000,            // 默认100万条消息
+		maxAge: 7 * 24 * time.Hour, // 默认保存7天
 	}
 
 	for _, opt := range options {
@@ -73,10 +71,7 @@ func (my *StreamWriter) Write(ctx context.Context, values map[string]any) (strin
 	}).Result()
 
 	if err != nil {
-		if my.args.errorLogger != nil {
-			my.args.errorLogger("Failed to write message:", err)
-		}
-
+		logo.Error("Failed to write message: %v", err)
 		return "", err
 	}
 
@@ -98,9 +93,7 @@ func (my *StreamWriter) WriteBatch(ctx context.Context, messages []map[string]an
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		if my.args.errorLogger != nil {
-			my.args.errorLogger("Failed to write batch messages:", err)
-		}
+		logo.Error("Failed to write batch messages: %v", err)
 		return err
 	}
 
@@ -110,14 +103,11 @@ func (my *StreamWriter) WriteBatch(ctx context.Context, messages []map[string]an
 func (my *StreamWriter) cleanOldMessages(ctx context.Context) {
 	// 计算截止时间
 	cutoff := time.Now().Add(-my.args.maxAge)
-
-	// 将时间转换为Redis Stream的ID格式 (timestamp-sequence)
 	cutoffID := formatStreamID(cutoff.UnixMilli())
 
 	// 删除旧消息
-	err := my.client.XTrimMinID(ctx, my.streamKey, cutoffID).Err()
-	if err != nil && my.args.errorLogger != nil {
-		my.args.errorLogger("Failed to clean old messages:", err)
+	if err := my.client.XTrimMinID(ctx, my.streamKey, cutoffID).Err(); err != nil {
+		logo.Error("Failed to clean old messages: %v", err)
 	}
 }
 

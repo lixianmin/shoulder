@@ -1,6 +1,8 @@
 package redisx
 
-import "time"
+import (
+	"time"
+)
 
 /********************************************************************
 created:    2024-11-09
@@ -10,11 +12,10 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 type streamReaderArguments struct {
-	groupName       string
-	consumerName    string
-	blockDuration   time.Duration
-	messageChanSize int
-	startId         string
+	groupName     string
+	consumerName  string
+	blockDuration time.Duration
+	startId       string
 }
 
 type StreamReaderOption func(*streamReaderArguments)
@@ -37,13 +38,7 @@ func WithBlockDuration(duration time.Duration) StreamReaderOption {
 	}
 }
 
-func WithMessageChanSize(size int) StreamReaderOption {
-	return func(args *streamReaderArguments) {
-		args.messageChanSize = size
-	}
-}
-
-func WithStartID(id string) StreamReaderOption {
+func WithStartId(id string) StreamReaderOption {
 	return func(args *streamReaderArguments) {
 		args.startId = id
 	}
