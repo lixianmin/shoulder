@@ -2,6 +2,13 @@ package redisx
 
 import "time"
 
+/********************************************************************
+created:    2024-11-09
+author:     lixianmin
+
+Copyright (C) - All Rights Reserved
+*********************************************************************/
+
 type streamReaderArguments struct {
 	groupName       string
 	consumerName    string
