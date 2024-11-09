@@ -18,7 +18,7 @@ Copyright (C) - All Rights Reserved
 *********************************************************************/
 
 type StreamMessage struct {
-	ID     string
+	Id     string
 	Values map[string]any
 	Err    error
 }
@@ -28,6 +28,7 @@ type StreamReader struct {
 	streamKey   string
 	messageChan chan StreamMessage
 	wc          loom.WaitClose
+	groupName   string
 }
 
 func NewStreamReader(client *redis.Client, streamKey string, options ...StreamReaderOption) *StreamReader {
@@ -49,6 +50,7 @@ func NewStreamReader(client *redis.Client, streamKey string, options ...StreamRe
 		client:      client,
 		streamKey:   streamKey,
 		messageChan: make(chan StreamMessage, args.messageChanSize),
+		groupName:   args.groupName,
 	}
 
 	// 确保消费者组存在
@@ -89,7 +91,7 @@ func (my *StreamReader) goRead(later loom.Later, args streamReaderArguments) {
 			if len(streams) > 0 && len(streams[0].Messages) > 0 {
 				for _, msg := range streams[0].Messages {
 					my.messageChan <- StreamMessage{
-						ID:     msg.ID,
+						Id:     msg.ID,
 						Values: msg.Values,
 					}
 				}
@@ -104,4 +106,8 @@ func (my *StreamReader) Close() error {
 
 func (my *StreamReader) MessageChan() <-chan StreamMessage {
 	return my.messageChan
+}
+
+func (my *StreamReader) Ack(ctx context.Context, messageId string) error {
+	return my.client.XAck(ctx, my.streamKey, my.groupName, messageId).Err()
 }
