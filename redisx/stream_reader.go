@@ -27,11 +27,11 @@ type StreamMessage struct {
 
 // Ack 确认消息已被处理, 这个必须在message自己调用, 而不是直接基于返回值, 因为可能在回调方法中
 func (msg *StreamMessage) Ack(ctx context.Context) error {
-	if msg.reader == nil || msg.Err != nil {
-		return nil // 如果是错误消息或reader为nil，直接返回
+	if msg.reader != nil {
+		return msg.reader.ack(ctx, msg.Id)
 	}
 
-	return msg.reader.ack(ctx, msg.Id)
+	return nil // 如果reader为nil，直接返回
 }
 
 type StreamReader struct {
